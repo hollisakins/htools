@@ -54,9 +54,10 @@ def derivativeLogMBB(T, beta, lam0):
 
 def lam_intersect(alpha, T, beta, lam0):
     '''Compute the wavelength where the derivative of the log of MBB equals the slope of the power law'''
-    MBB_deriv = np.flip(derivativeLogMBB(T, beta, lam0))
+    MBB_deriv = derivativeLogMBB(T, beta, lam0)
     lam_fine = np.logspace(0.1, 2.5, 1000)
-    return lam_fine[np.searchsorted(MBB_deriv, alpha)]
+    lam_fine = 0.5*(lam_fine[1:] + lam_fine[:-1])
+    return lam_fine[np.argmin(np.abs(MBB_deriv-alpha))]
 
 def powerLaw(lam, Npl, alpha):
     """Equation of the power law portion of SED"""

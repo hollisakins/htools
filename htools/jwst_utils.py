@@ -18,13 +18,14 @@ warnings.simplefilter('ignore', FITSFixedWarning)
 warnings.simplefilter('ignore')
 
 from .imaging import gen_rgb_image
-from .utils import get_lameff, get_lamrange, gen_cutout
+from .utils import get_lameff, get_lamrange#, gen_cutout
 from .eazy_helpers import get_obs_sed,get_tem_sed, get_pz, load_eazy_catalog
 
 config = {
     'bands': {
         'cosmos-web':['f814w','f115w','f150w','f277w','f444w','f770w'],
-        'primer-cosmos':['f606w','f814w','f090w','f115w','f150w','f200w','f277w','f356w','f410m','f444w','f770w','f1800w']
+        'primer-cosmos':['f606w','f814w','f090w','f115w','f150w','f200w','f277w','f356w','f410m','f444w','f770w','f1800w'],
+        'ceers':['f606w','f814w','f115w','f150w','f200w','f277w','f356w','f410m','f444w']
     },
     'filters': {
         'cosmos-web':['hst_acs_f814w','jwst_nircam_f115w','jwst_nircam_f150w','jwst_nircam_f277w','jwst_nircam_f444w','jwst_miri_f770w'],
@@ -35,6 +36,332 @@ config = {
         'primer-cosmos':['indigo', 'darkmagenta','#0c00e7', '#0088e7', '#03a1a1', '#009a49', '#83b505', '#c2a206','darkorange','#ab0202','#e74001','#630606']
     }
 }
+
+
+def get_filepath(field, band, ext, tile=None):
+    '''
+    general helper function to load a given JWST (or other) image
+    some fields are broken into tiles to save memory; for these, specify e.g. tile='A5'
+    `field` must be one of 'cosmos-web', 'primer-cosmos', 'ceers' (for now)
+    `band` must be in the above config
+    '''
+
+    ############################ some code to change the default path based on the hostname
+    import socket
+    hostname = socket.gethostname()
+    if hostname == 'cns-s-pmaa65432': # my desktop
+        simmons_prefix = '/Users/hba423/simmons//'
+    else: # otherwise, on hard drive
+        simmons_prefix = '/V/simmons/'
+    ############################
+
+    ############################ for ground-based images
+    if field in ['cosmos-web','primer-cosmos']:
+        if band in ['Y','J','H','Ks']:
+            if not ext.startswith('sci') or ext.startswith('wht'): 
+                raise Exception('we dont have ERR maps for UVISTA! only SCI, WHT')
+            if tile.startswith('A'):
+                filepath, hdu_index = f'{simmons_prefix}/data/cosmos/mosaics/cutout-HSC-{band.upper()}-9813-pdr3_dud_rev_{ext}_zp-28.09_{tile}.fits', 0
+            elif tile.startswith('B'):
+                filepath, hdu_index = f'{simmons_prefix}/data/cosmos/mosaics/{tile}--cutout-HSC-{band.upper()}-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+        if band in ['g','r','i','z','y']:
+            if not ext.startswith('sci'):
+                raise Exception('we dont have ERR or WHT maps for HSC! only SCI')
+            if tile.startswith('A'):
+                filepath, hdu_index = f'{simmons_prefix}/data/cosmos/mosaics/cutout-HSC-{band.upper()}-9813-pdr3_dud_rev_{ext}_zp-28.09_{tile}.fits', 0
+            elif tile.startswith('B'):
+                filepath, hdu_index = f'{simmons_prefix}/data/cosmos/mosaics/{tile}--cutout-HSC-{band.upper()}-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+
+    # if len(suffix)>0:
+    #     typ += f'_{suffix}'
+
+    if field=='cosmos-web':
+        if band=='f814w':
+            if ext.startswith('sci'): ext = ext.replace('sci','drz')
+        if tile.startswith('B'):
+            if band=='f814w':
+                filepath, hdu_index = f'{simmons_prefix}/data/cosmos-web/mosaics/mosaic_cosmos_web_2024jan_30mas_tile_{tile}_hst_acs_wfc_f814w_{ext}.fits', 0
+            elif band=='f770w':
+                filepath, hdu_index = f'{simmons_prefix}/data/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_30mas_{tile}_{ext}.fits', 1
+            elif band in ['f115w','f150w','f277w','f444w']:
+                filepath, hdu_index = f'{simmons_prefix}/data/cosmos-web/mosaics/mosaic_nircam_{band}_COSMOS-Web_30mas_{tile}_{ext}.fits', 0
+                # if 'psfMatched' in ext: hdu_index=0
+        elif tile.startswith('A'):
+            if band=='f814w':
+                filepath, hdu_index = f'{simmons_prefix}/data/cosmos-web/mosaics/mosaic_cosmos_web_2023apr_30mas_tile_{tile}_hst_acs_wfc_f814w_{ext}.fits', 0
+            elif band=='f770w':
+                filepath, hdu_index = f'{simmons_prefix}/data/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_30mas_{tile}_{ext}.fits', 1           
+                if tile in ['A7','A9','A10']:
+                    hdu_index = 0
+            elif band in ['f115w','f150w','f277w','f444w']:
+                filepath, hdu_index = f'{simmons_prefix}/data/cosmos-web/mosaics/mosaic_nircam_{band}_COSMOS-Web_30mas_{tile}_{ext}.fits', 0
+                # if 'psfMatched' in ext: hdu_index=0
+
+        else:
+            print(f'tile "{tile}" not understood')
+            return
+                
+    
+    elif field=='primer-cosmos':
+        if band in ['f606w','f814w']:
+            if ext.startswith('sci'): ext = ext.replace('sci','drz')
+            filepath, hdu_index = f'{simmons_prefix}/data/primer/mosaics/mosaic_cosmos_primer_30mas_acs_wfc_{band}_{ext}.fits', 1
+        elif band in ['f125w','f160w']:
+            if ext.startswith('sci'): ext = ext.replace('sci','drz')
+            filepath, hdu_index = f'{simmons_prefix}/data/primer/mosaics/mosaic_cosmos_primer_30mas_wfc3_ir_{band}_{ext}.fits', 1
+        elif band in ['f770w','f1800w']:
+            filepath, hdu_index = f'{simmons_prefix}/data/primer/mosaics/mosaic_miri_{band}_PRIMER-COSMOS_60mas_{ext}.fits', 1
+        elif band in ['f090w','f115w','f150w','f200w','f277w','f356w','f410m','f444w']:
+            filepath, hdu_index = f'{simmons_prefix}/data/primer/mosaics/mosaic_nircam_{band}_PRIMER-COSMOS_30mas_{ext}.fits', 1
+
+    elif field=='ceers':
+        if band in ['f606w','f814w','f105w','f125w','f140w','f160w']:
+            if ext=='wht': raise Exception("WHT map don't exist for CEERS HST")
+            if ext=='sci_pfMatched': raise Exception("I don't yet have PSF matched mosaics for CEERS")
+            
+            if band in ['f606w','f814w']:
+                if ext=='sci': filepath, hdu_index = f'{simmons_prefix}/data/ceers/mosaics/{tile}/egs_all_acs_wfc_{band}_030mas_v1.9_{tile}_mbkgsub1.fits', 0
+                if ext=='err': filepath, hdu_index = f'{simmons_prefix}/data/ceers/mosaics/{tile}/egs_all_acs_wfc_{band}_030mas_v1.9_{tile}_rms.fits', 0
+            elif band in ['f105w','f125w','f140w','f160w']:
+                if ext=='sci': filepath, hdu_index = f'{simmons_prefix}/data/ceers/mosaics/{tile}/egs_all_wfc3_ir_{band}_030mas_v1.9_{tile}_mbkgsub1.fits', 0
+                if ext=='err': filepath, hdu_index = f'{simmons_prefix}/data/ceers/mosaics/{tile}/egs_all_wfc3_ir_{band}_030mas_v1.9.1_{tile}_rms.fits', 0
+        elif band in ['f115w','f150w','f200w','f277w','f356w','f410m','f444w']:
+            if ext=='sci': hdu_index=1
+            if ext=='err': hdu_index=3
+            if ext=='wht': hdu_index=5
+            if ext=='sci_pfMatched': raise Exception("I don't yet have PSF matched mosaics for CEERS")            
+            filepath = f'{simmons_prefix}/data/ceers/mosaics/{tile}/ceers_{tile}_{band}_v1_mbkgsub1.fits'
+        elif band in ['f560w','f770w']:
+            if ext=='sci': hdu_index=1
+            if ext=='err': hdu_index=2
+            if ext=='wht': hdu_index=4
+            if ext=='sci_pfMatched': raise Exception("I don't yet have PSF matched mosaics for CEERS")            
+            if hostname == 'cns-s-pmaa65432':
+                filepath = f'{simmons_prefix}/data/ceers/mosaics/{tile}/ceers_{tile}_{band}_i2d.fits'
+            else:
+                filepath = f'/data/ceers/mosaics/{tile}/ceers_{tile}_{band}_i2d.fits'
+
+
+    else:
+        print(f'field "{field}" not understood')
+        return
+    return filepath, hdu_index
+    
+            
+
+
+def load_image(field, band, ext, tile=None, convert_units=False):
+    '''
+        'tile' == 'A1'--'A10' or 'B1'--'B10' or 'primer-cosmos'
+        'band' == one of 'f814w', 'f115w', 'f150w', 'f277w', 'f444w', 'f770w'
+        'typ' == one of 'sci', 'err', 'wht'
+    '''
+    filepath, hdu_index = get_filepath(field, band, ext, tile=tile)  
+    f = fits.open(filepath)
+    # f = fits.open(filepath)
+    # if np.ndim(f[0].data)==0:
+    #     data, header = f[1].data, f[1].header
+    #     if 'NSCI_MU' in f[0].header:
+    #         f[1].header['NSCI_MU'] = f[0].header['NSCI_MU']
+    #     if 'NSCI_SIG' in f[0].header:
+    #         f[1].header['NSCI_SIG'] = f[0].header['NSCI_SIG']
+    # else:
+        # data, header = f[0].data, f[0].header
+    data, header = f[hdu_index].data, f[hdu_index].header
+    del f
+
+
+    if convert_units:
+        if 'sci' in ext or 'err' in ext:
+            if band=='f814w':
+                photflam, photplam = 6.99715969242424E-20, 8047.468423484849
+                conversion = 3.33564e10 * (photplam)**2 * photflam
+            elif band=='f606w':
+                photflam, photplam = 7.86211131043771E-20, 5921.891224579125
+                conversion = 3.33564e10 * (photplam)**2 * photflam
+            elif band=='f125w':
+                photflam, photplam = 2.2446000E-20, 1.2486060E+04
+                conversion = 3.33564e10 * (photplam)**2 * photflam
+            elif band=='f160w':
+                photflam, photplam = 1.9429001E-20,  15369.176
+                conversion = 3.33564e10 * (photplam)**2 * photflam
+            else:
+                conversion = 1e12 * np.pi**2/(180**2) * (1/(3600**2)) * 0.03**2
+            data *= conversion
+        else:
+            print('not converting units for some reason')
+
+    return data, header
+
+def load_hdr(field, band, tile=None):
+    return load_image(field, band, 'sci', tile)[1]
+def load_sci(field, band, tile=None, convert_units=False, suffix=None):
+    if suffix:
+        return load_image(field, band, f'sci_{suffix}', tile, convert_units=convert_units)[0]
+    else:
+        return load_image(field, band, 'sci', tile, convert_units=convert_units)[0]
+def load_wcs(field, band, tile=None):
+    return WCS(load_hdr(field, band, tile))
+def load_err(field, band, tile=None, convert_units=False):
+    return load_image(field, band, 'err', tile, convert_units=convert_units)[0]
+def load_wht(field, band, tile=None):
+    return load_image(field, band, 'wht', tile)[0]
+# def load_vrp(field, band, tile=tile, suffix=''):
+#     return load_image(field, tile, band, 'vrp', suffix=suffix)[0]
+# def load_exp(field, band, tile=tile, suffix=''):
+#     d, h = load_image(field, tile, band, 'exp', suffix=suffix)
+#     return d, WCS(h)
+
+def gen_cutout(field, band, coord, width, suffix='', tile=None, err_method='simple', verbose=False):
+    '''
+    coord = astropy.coordinates.SkyCoord object or tuple of (ra,dec) in degrees
+    width = astropy.units.quantity.Quantity object or float assumed in arcsec
+    '''
+    if verbose: print(f'Generating cutout for {band}...')
+    import warnings
+    from astropy.wcs import FITSFixedWarning
+    warnings.filterwarnings("ignore", category=FITSFixedWarning)
+    from astropy.nddata.utils import Cutout2D
+    from astropy.coordinates import SkyCoord
+    import astropy.units as u
+    if type(coord)==tuple:
+        coord = SkyCoord(*coord, unit='deg')
+    if not type(width)==u.quantity.Quantity:
+        width = width * u.arcsec
+    
+    if band=='detec':
+        return gen_detec_cutout(field, tile, coord, width)
+    if band=='segm':
+        return gen_segm_cutout(field, tile, coord, width)
+
+    if len(suffix)>0:
+        sci, hdr = load_image(field, band, f'sci_{suffix}', tile=tile)
+    else:
+        sci, hdr = load_image(field, band, 'sci', tile=tile)
+    wcs = WCS(hdr)
+    cutout = Cutout2D(sci, coord, width, wcs=wcs)
+    cutout_wcs = cutout.wcs
+    sci = cutout.data
+
+    if err_method != 'none':
+        from astropy.stats import sigma_clipped_stats 
+        mean, median, std = sigma_clipped_stats(sci)
+        sci -= median
+        if err_method=='simple': # per pixel rms 
+            err = np.ones_like(sci)*std
+        else:
+            try:
+                err = load_err(field, tile, band)
+                err = Cutout2D(err, coord, width, wcs=wcs).data
+            except:
+                if verbose: print('No ERR map found, using WHT')
+                wht  = load_wht(field, tile, band)
+                err = 1/np.sqrt(Cutout2D(wht, coord, width, wcs=wcs).data)
+    
+    if band=='f814w':
+        photflam, photplam = 6.99715969242424E-20, 8047.468423484849
+        conversion = 3.33564e10 * (photplam)**2 * photflam
+    elif band=='f606w':
+        photflam, photplam = 7.86211131043771E-20, 5921.891224579125
+        conversion = 3.33564e10 * (photplam)**2 * photflam
+    elif band=='f125w':
+        photflam, photplam = 2.2446000E-20, 1.2486060E+04
+        conversion = 3.33564e10 * (photplam)**2 * photflam
+    elif band=='f160w':
+        photflam, photplam = 1.9429001E-20,  15369.176
+        conversion = 3.33564e10 * (photplam)**2 * photflam
+    else:
+        conversion = 1e12 * np.pi**2/(180**2) * (1/(3600**2)) * 0.03**2
+    sci *= conversion
+    if err_method != 'none':
+        err *= conversion
+        setattr(cutout, 'err', err)
+        setattr(cutout, 'snr', sci/err)
+
+
+    cutout.data = sci
+    ps = wcs.proj_plane_pixel_scales()[0].to(u.arcsec).value
+    size = np.shape(sci)[0]
+    extent = [-size*ps/2, size*ps/2, -size*ps/2, size*ps/2]
+
+    setattr(cutout, 'sci', sci)
+    setattr(cutout, 'extent', extent)
+
+    return cutout
+    
+def gen_detec_cutout(field, tile, coord, width):
+    import warnings
+    from astropy.wcs import FITSFixedWarning
+    warnings.filterwarnings("ignore", category=FITSFixedWarning)
+    from astropy.nddata.utils import Cutout2D
+    import astropy.units as u
+    import socket 
+    hostname = socket.gethostname()
+    if hostname=='cns-s-pmaa65432':
+        simmons_prefix = '/Users/hba423/simmons//'
+    else:
+        simmons_prefix = '/V/simmons/'
+    if field=='primer-cosmos':
+        sci = fits.getdata(f'{simmons_prefix}/data/primer/mosaics/detection_chi2pos_SWLW_primer-cosmos.fits')
+        wcs = WCS(fits.getheader(f'{simmons_prefix}/data/primer/mosaics/detection_chi2pos_SWLW_primer-cosmos.fits'))
+    elif field=='cosmos-web':
+        sci = fits.getdata(f'{simmons_prefix}/data/cosmos-web/mosaics/detection_chi2pos_SWLW_{tile}.fits')
+        wcs = WCS(fits.getheader(f'{simmons_prefix}/data/cosmos-web/mosaics/detection_chi2pos_SWLW_{tile}.fits'))
+    cutout = Cutout2D(sci, coord, width, wcs=wcs)
+    ps = cutout.wcs.proj_plane_pixel_scales()[0].to(u.arcsec).value
+    size = np.shape(cutout.data)[0]
+    extent = [-size*ps/2, size*ps/2, -size*ps/2, size*ps/2]
+    setattr(cutout, 'sci', cutout.data)
+    setattr(cutout, 'extent', extent)
+    return cutout
+
+def gen_segm_cutout(field, tile, coord, width):
+    import warnings
+    from astropy.wcs import FITSFixedWarning
+    warnings.filterwarnings("ignore", category=FITSFixedWarning)
+    from astropy.nddata.utils import Cutout2D
+    import astropy.units as u
+    import socket 
+    hostname = socket.gethostname()
+    if hostname=='cns-s-pmaa65432':
+        simmons_prefix = '/Users/hba423/simmons//'
+    else:
+        simmons_prefix = '/V/simmons/'
+    if field=='primer-cosmos':
+        segm = np.load(f'{simmons_prefix}/data/primer/mosaics/detection_chi2pos_SWLW_primer-cosmos_{tile}_segmap.npy')
+        detec = fits.getdata(f'{simmons_prefix}/data/primer/mosaics/detection_chi2pos_SWLW_primer-cosmos.fits')
+        wcs = WCS(fits.getheader(f'{simmons_prefix}/data/primer/mosaics/detection_chi2pos_SWLW_primer-cosmos.fits'))
+        if tile == 'south':
+            c0 = wcs.pixel_to_world(12480, 12500)
+            cutout = Cutout2D(detec, c0, size=[11.0*u.arcmin,9.8*u.arcmin], wcs=wcs)
+        elif tile == 'north': 
+            c0 = wcs.pixel_to_world(12480, 33000)
+            cutout = Cutout2D(detec, c0, size=[11.0*u.arcmin,9.8*u.arcmin], wcs=wcs)
+        wcs = cutout.wcs
+    elif field=='cosmos-web':
+        segm = np.load(f'{simmons_prefix}/data/cosmos-web/mosaics/detection_chi2pos_SWLW_{tile}_segmap.npy')
+        wcs = WCS(fits.getheader(f'{simmons_prefix}/data/cosmos-web/mosaics/detection_chi2pos_SWLW_{tile}.fits'))
+
+    cutout = Cutout2D(segm, coord, width, wcs=wcs)
+    ps = cutout.wcs.proj_plane_pixel_scales()[0].to(u.arcsec).value
+    size = np.shape(cutout.data)[0]
+    extent = [-size*ps/2, size*ps/2, -size*ps/2, size*ps/2]
+    sci = cutout.data
+
+    for i,unq_val in enumerate(np.sort(np.unique(sci))):
+        sci[sci==unq_val] = i
+
+    cutout.data = sci
+    setattr(cutout, 'sci', sci)
+    setattr(cutout, 'extent', extent)
+    from photutils.utils.colormaps import make_random_cmap
+    from matplotlib.colors import to_rgba
+    cmap = make_random_cmap(len(np.unique(sci)))
+    cmap.colors[0] = to_rgba('k')
+    setattr(cutout, 'cmap', cmap)
+    return cutout
+
+
 
 
 def make_inspection_plot(ID, 
@@ -57,6 +384,9 @@ def make_inspection_plot(ID,
                          show_bd=False,
                          suffix=None,
                          rgb_params=dict(noiselum=0.1,noisesig=1,satpercent=0.5),
+                         plot_msa_slits=False,
+                         plot_msa_wavelength_coverage=False,
+                         msa_target_info=None,
                          show=False, 
                          verbose=True):
     with plt.style.context(('hba_sans')):
@@ -72,7 +402,10 @@ def make_inspection_plot(ID,
             tile = cat['tile'][0]
         elif field=='primer-cosmos':
             tile = cat['tile'][0]
-        display_width = 8*np.max([cat['kron1_a'][0],0.2]) * u.arcsec
+
+        if display_width == 'auto':
+            display_width = 8*np.max([cat['kron1_a'][0],0.2]) * u.arcsec
+
         if display_width > cutout_width:
             cutout_width = 2*display_width
             if verbose: print(f'Increasing cutout_width to {cutout_width.value:.2f}')
@@ -143,9 +476,9 @@ def make_inspection_plot(ID,
         elif field=='primer-cosmos':
             fig = plt.figure(figsize=(8.0, 10.5), constrained_layout=False)
             gs = mpl.gridspec.GridSpec(ncols=12, nrows=7, height_ratios=[2.2,2.2,0.0,1,4.5,0.5,3.0],figure=fig)
-            gs.update(hspace=0.08, wspace=0.04, left=0.03, bottom=0.06, right=0.97, top=0.90)
-            ax_f814 = plt.subplot(gs[0,0:2])
-            ax_f606 = plt.subplot(gs[0,2:4])
+            gs.update(hspace=0.08, wspace=0.04, left=0.03, bottom=0.05, right=0.97, top=0.88)
+            ax_f606 = plt.subplot(gs[0,0:2])
+            ax_f814 = plt.subplot(gs[0,2:4])
             ax_f090 = plt.subplot(gs[0,4:6])
             ax_f115 = plt.subplot(gs[0,6:8])
             ax_f150 = plt.subplot(gs[0,8:10])
@@ -211,7 +544,7 @@ def make_inspection_plot(ID,
         vm = []
         for i in range(N):
             try:
-                cutout = gen_cutout(field, tile, cutout_names[i], coord, width=cutout_width)
+                cutout = gen_cutout(field, cutout_names[i], coord, width=cutout_width, tile=tile)
                 cutouts.append(cutout)
                 vm.append(np.nanpercentile(cutout.snr, 99))
             except:
@@ -232,9 +565,9 @@ def make_inspection_plot(ID,
             cutout = cutouts[i]
             if cutout is not None:
                 if np.all(np.isnan(cutout.snr)):
-                    ax.imshow(np.zeros_like(cutout.snr), vmin=vmin,vmax=vmax, cmap='RdGy_r', origin='lower', extent=cutout.extent)
+                    ax.imshow(np.zeros_like(cutout.snr), vmin=vmin,vmax=vmax, cmap='Greys', origin='lower', extent=cutout.extent)
                 else:
-                    ax.imshow(cutout.snr, vmin=vmin, vmax=vmax, cmap='RdGy_r', origin='lower', extent=cutout.extent)
+                    ax.imshow(cutout.snr, vmin=vmin, vmax=vmax, cmap='Greys', origin='lower', extent=cutout.extent)
                 a, b, theta = cat['kron1_a'], cat['kron1_b'], np.degrees(cat['kron_pa'])
                 ax.add_patch(mpl.patches.Ellipse((0,0), width=2*a, height=2*b, angle=theta, facecolor='none', edgecolor='salmon', linestyle='-', linewidth=0.5))
                 ax.add_patch(mpl.patches.Circle((0,0), radius=0.15, facecolor='none', edgecolor='w', linestyle='--', linewidth=0.5))
@@ -258,11 +591,11 @@ def make_inspection_plot(ID,
             name = cutout_names2[i]
             ax = cutout_axes2[i]
             try:
-                cutout = gen_cutout(field, tile, name, coord, cutout_width, err_method='simple')
-                ax.imshow(cutout.snr, vmin=-3, vmax=8, cmap='RdGy_r', origin='lower', extent=cutout.extent)
+                cutout = gen_cutout(field, name, coord, cutout_width, err_method='simple', tile=tile)
+                ax.imshow(cutout.snr, vmin=-3, vmax=8, cmap='Greys', origin='lower', extent=cutout.extent)
                 ax.add_patch(mpl.patches.Circle((0,0), radius=0.15, facecolor='none', edgecolor='w', linestyle='--', linewidth=0.5))
             except:
-                ax.imshow(np.zeros((100,100)), vmin=-3, vmax=8, cmap='RdGy_r', origin='lower', extent=[-display_width.to(u.arcsec).value, display_width.to(u.arcsec).value, -display_width.to(u.arcsec).value, display_width.to(u.arcsec).value])
+                ax.imshow(np.zeros((100,100)), vmin=-3, vmax=8, cmap='Greys', origin='lower', extent=[-display_width.to(u.arcsec).value, display_width.to(u.arcsec).value, -display_width.to(u.arcsec).value, display_width.to(u.arcsec).value])
                 pass
             ax.set_xlim(-display_width.to(u.arcsec).value, display_width.to(u.arcsec).value)
             ax.set_ylim(-display_width.to(u.arcsec).value, display_width.to(u.arcsec).value)
@@ -272,10 +605,10 @@ def make_inspection_plot(ID,
 
         if verbose: print('\t Making RGB image...')
         if field=='cosmos-web':
-            f115w_cutout_pm = gen_cutout(field, tile, 'f115w', coord, cutout_width, suffix='psfMatched')
-            f150w_cutout_pm = gen_cutout(field, tile, 'f150w', coord, cutout_width, suffix='psfMatched')
-            f277w_cutout_pm = gen_cutout(field, tile, 'f277w', coord, cutout_width, suffix='psfMatched')
-            f444w_cutout_pm = gen_cutout(field, tile, 'f444w', coord, cutout_width)
+            f115w_cutout_pm = gen_cutout(field, 'f115w', coord, cutout_width, tile=tile, suffix='psfMatched')
+            f150w_cutout_pm = gen_cutout(field, 'f150w', coord, cutout_width, tile=tile, suffix='psfMatched')
+            f277w_cutout_pm = gen_cutout(field, 'f277w', coord, cutout_width, tile=tile, suffix='psfMatched')
+            f444w_cutout_pm = gen_cutout(field, 'f444w', coord, cutout_width, tile=tile)
             pm115 = f115w_cutout_pm.sci
             pm150 = f150w_cutout_pm.sci
             pm277 = f277w_cutout_pm.sci
@@ -292,14 +625,14 @@ def make_inspection_plot(ID,
             input_dict['f444w'] = {'colors':np.array([1.0, 0, 0]),     'data':pm444}
         
         elif field=='primer-cosmos':
-            f090w_cutout_pm = gen_cutout(field, tile, 'f090w', coord, cutout_width, suffix='psfMatched')
-            f115w_cutout_pm = gen_cutout(field, tile, 'f115w', coord, cutout_width, suffix='psfMatched')
-            f150w_cutout_pm = gen_cutout(field, tile, 'f150w', coord, cutout_width, suffix='psfMatched')
-            f200w_cutout_pm = gen_cutout(field, tile, 'f200w', coord, cutout_width, suffix='psfMatched')
-            f277w_cutout_pm = gen_cutout(field, tile, 'f277w', coord, cutout_width, suffix='psfMatched')
-            f356w_cutout_pm = gen_cutout(field, tile, 'f356w', coord, cutout_width, suffix='psfMatched')
-            f410m_cutout_pm = gen_cutout(field, tile, 'f410m', coord, cutout_width, suffix='psfMatched')
-            f444w_cutout_pm = gen_cutout(field, tile, 'f444w', coord, cutout_width)
+            f090w_cutout_pm = gen_cutout(field, 'f090w', coord, cutout_width, tile=tile, suffix='psfMatched')
+            f115w_cutout_pm = gen_cutout(field, 'f115w', coord, cutout_width, tile=tile, suffix='psfMatched')
+            f150w_cutout_pm = gen_cutout(field, 'f150w', coord, cutout_width, tile=tile, suffix='psfMatched')
+            f200w_cutout_pm = gen_cutout(field, 'f200w', coord, cutout_width, tile=tile, suffix='psfMatched')
+            f277w_cutout_pm = gen_cutout(field, 'f277w', coord, cutout_width, tile=tile, suffix='psfMatched')
+            f356w_cutout_pm = gen_cutout(field, 'f356w', coord, cutout_width, tile=tile, suffix='psfMatched')
+            f410m_cutout_pm = gen_cutout(field, 'f410m', coord, cutout_width, tile=tile, suffix='psfMatched')
+            f444w_cutout_pm = gen_cutout(field, 'f444w', coord, cutout_width, tile=tile)
             pm090 = f090w_cutout_pm.sci
             pm115 = f115w_cutout_pm.sci
             pm150 = f150w_cutout_pm.sci
@@ -337,6 +670,39 @@ def make_inspection_plot(ID,
         ax_rgb1.set_xlabel('NIRCAM RGB')
         ax_rgb1.set_xlim(-display_width.to(u.arcsec).value/2, display_width.to(u.arcsec).value/2)
         ax_rgb1.set_ylim(-display_width.to(u.arcsec).value/2, display_width.to(u.arcsec).value/2)
+
+
+        if plot_msa_slits:
+            from astropy.table import Table
+            assert msa_target_info is not None
+            if type(msa_target_info)==str:
+                msa_target_info = [msa_target_info]
+            shutter_size_x = 0.26785
+            open_size_x = 0.20
+            shutter_size_y = 0.5232
+            open_size_y = 0.46
+            for msa_target_info_file in msa_target_info:
+                tab = Table.read(msa_target_info_file)
+                tab = tab[tab['ID']==ID]
+                if len(tab)==0: continue
+                pa = float(tab['Aperture PA (Degrees)'])
+                for addl_y_offset in [-1,0,1]:
+                    offset_x = float(tab['Offset (x)'])
+                    offset_y = float(tab['Offset (y)'])
+                    offset_x = offset_x*shutter_size_x
+                    offset_y = offset_y*shutter_size_y + addl_y_offset*shutter_size_y
+                    rot_offset_x1 =  np.cos(np.radians(pa))*offset_x - np.sin(np.radians(pa))*offset_y 
+                    rot_offset_y1 =  np.sin(np.radians(pa))*offset_x + np.cos(np.radians(pa))*offset_y 
+                    rot_offset_x2 =  np.cos(np.radians(pa))*(offset_x-0.035) - np.sin(np.radians(pa))*(offset_y-0.035)
+                    rot_offset_y2 =  np.sin(np.radians(pa))*(offset_x-0.035) + np.cos(np.radians(pa))*(offset_y-0.035)
+
+                    p = mpl.patches.Rectangle((rot_offset_x1, rot_offset_y1), -shutter_size_x, -shutter_size_y, angle=pa, rotation_point='xy', facecolor='none', edgecolor='w', linestyle='--', alpha=0.4, linewidth=0.5)
+                    ax_rgb1.add_patch(p)
+                    p = mpl.patches.Rectangle((rot_offset_x2, rot_offset_y2), -open_size_x, -open_size_y, angle=pa, rotation_point='xy', facecolor='none', edgecolor='w', alpha=0.4, linewidth=0.5)
+                    ax_rgb1.add_patch(p)
+
+
+
         ax_rgb2.imshow(imrgb, extent=f444w_cutout_pm.extent)
         ax_rgb2.axis('off')
         ax_rgb2.set_xlim(-cutout_width.to(u.arcsec).value/2, cutout_width.to(u.arcsec).value/2)
@@ -399,9 +765,10 @@ def make_inspection_plot(ID,
 
             ax_rgb2.legend((p1,p2,p3,p4),('MIPS 24µm','VLA 3GHz','SCUBA-2 850µm','ALMA 2mm'),loc=('lower center'),bbox_to_anchor=(0.5,-0.2),ncol=2,facecolor='k',edgecolor='0.3',labelcolor='w', frameon=True,fontsize=7)
 
-        cutout = gen_cutout(field, tile,'detec',coord,cutout_width/2)
+        cutout = gen_cutout(field, 'detec', coord,cutout_width/2, tile=tile)
         d = np.sqrt(cutout.data)
-        ax_detc.imshow(d, extent=cutout.extent, vmin=1, vmax=np.nanpercentile(d,99), cmap='Greys_r')
+        cen = np.shape(d)[0]//2
+        ax_detc.imshow(d, extent=cutout.extent, vmin=1, vmax=np.nanpercentile(d[cen-20:cen+20,cen-20:cen+20],99), cmap='Greys_r')
         ax_detc.tick_params(labelleft=False,labelbottom=False,left=False,right=False,bottom=False,top=False,which='both')
         ax_detc.spines['left'].set_visible(False)    
         ax_detc.spines['bottom'].set_visible(False)    
@@ -414,7 +781,7 @@ def make_inspection_plot(ID,
         ax_detc.add_patch(mpl.patches.Ellipse((0,0), width=2*a, height=2*b, angle=theta, facecolor='none', edgecolor='salmon', linestyle='-', linewidth=0.5))
         ax_detc.add_patch(mpl.patches.Circle((0,0), radius=0.15, facecolor='none', edgecolor='w', linestyle='--', linewidth=0.5))
 
-        cutout = gen_cutout(field, tile,'segm',coord,cutout_width)
+        cutout = gen_cutout(field, 'segm',coord,cutout_width, tile=tile)
         ax_segm.imshow(cutout.data, extent=cutout.extent, cmap=cutout.cmap)
         ax_segm.tick_params(labelleft=False,labelbottom=False,left=False,right=False,bottom=False,top=False,which='both')
         ax_segm.spines['left'].set_visible(False)    
@@ -471,13 +838,13 @@ def make_inspection_plot(ID,
             maxflux = np.nanmax([maxflux,np.nanmax(flux)])
             plot_data(ax_sed, wav, wav_min, wav_max, flux, flux_err, ['0.7']*len(flux), annotate=False, label='AUTO')
         if phot_columns[0].startswith('aper'):
-            which_aper = int(phot_columns[0][-1])
+            which_aper = int(phot_columns[0][-1])-1
             flux = np.array([cat[f'f_aper_{b}'][0,which_aper] for b in bands])
             flux_err = np.array([cat[f'e_aper_{b}'][0,which_aper] for b in bands])
             maxflux = np.nanmax([maxflux,np.nanmax(flux)])
             plot_data(ax_sed, wav, wav_min, wav_max, flux, flux_err, colors, label=f"{aper_diams[which_aper]}'' APER")
         elif ('aper1' in phot_columns or 'aper2' in phot_columns or 'aper3' in phot_columns or 'aper4' in phot_columns or 'aper5' in phot_columns):
-            which_aper = int(phot_columns[1][-1])
+            which_aper = int(phot_columns[1][-1])-1
             flux = np.array([cat[f'f_aper_{b}'][0,which_aper] for b in bands])
             flux_err = np.array([cat[f'e_aper_{b}'][0,which_aper] for b in bands])
             maxflux = np.nanmax([maxflux,np.nanmax(flux)])
@@ -511,21 +878,29 @@ def make_inspection_plot(ID,
                 plot_data(ax_sed, wav, wav_min, wav_max, flux, flux_err, c2, zorder=-1000, annotate=False, label=f'PRIMER {ID_primer}')
 
         if eazy_run is not None:
-            if verbose: print('\t Plotting EAzY results...')
-            try:
-                twav, tflux, zbest = get_tem_sed(main=eazy_run, outdir=eazy_outdir, which=ID)
-                f = load_eazy_catalog(main=eazy_run, outdir=eazy_outdir, ext=1)
-                chi2 = f['chi2'][f['ID']==ID][0]
-                ax_sed.plot(twav, tflux, label=f'EAzY, $z={zbest:.2f}$ ($\chi^2={chi2:.1f}$)', color='slategray', linewidth=1, zorder=5)
+            if type(eazy_run)==str:
+                ezrs = [eazy_run]
+            else:
+                ezrs = eazy_run
+            
+            ez_c = ['slategrey','mediumslateblue']
+            for k,ezr in enumerate(ezrs):
+                if verbose: print('\t Plotting EAzY results...')
+                try:
+                    suffix = ezr.split('_')[-1]
+                    twav, tflux, zbest = get_tem_sed(main=ezr, outdir=eazy_outdir, which=ID)
+                    f = load_eazy_catalog(main=ezr, outdir=eazy_outdir, ext=1)
+                    chi2 = f['chi2'][f['ID']==ID][0]
+                    ax_sed.plot(twav, tflux, label=f'EAzY {suffix}, $z={zbest:.2f}$ ($\chi^2={chi2:.1f}$)', color=ez_c[k], linewidth=1, zorder=5)
 
-                ### P(z)
-                z, Pz = get_pz(main=eazy_run, outdir=eazy_outdir, which=ID)
-                Pz /= np.nanmax(Pz)
-                ax_pz.fill_between(z, Pz, color='slategray', alpha=0.1, zorder=5)
-                ax_pz.plot(z, Pz, color='slategray', linewidth=1, zorder=10)
-            except:
-                if verbose: print(f'\t ! EAzY run {eazy_run} not found')
-                pass
+                    ### P(z)
+                    z, Pz = get_pz(main=ezr, outdir=eazy_outdir, which=ID)
+                    Pz /= np.nanmax(Pz)
+                    ax_pz.fill_between(z, Pz, color=ez_c[k], alpha=0.1, zorder=5)
+                    ax_pz.plot(z, Pz, color=ez_c[k], linewidth=1, zorder=10)
+                except:
+                    if verbose: print(f'\t ! EAzY run {ezr} not found')
+                    pass
 
         ################################################################################################################
         ################################################################################################################
@@ -587,6 +962,48 @@ def make_inspection_plot(ID,
                     ax_pz.plot(z, Pz, color='purple', linewidth=1, zorder=20)
                 except:
                     if verbose: print(f'file pipes/posterior/{bp_run}/{ID}_bagpipes_results.fits not found!')
+
+        if plot_msa_wavelength_coverage:
+            assert msa_target_info is not None
+            from astropy.table import Table
+            if type(msa_target_info)==str:
+                msa_target_info = [msa_target_info]
+            for msa_target_info_file in msa_target_info:
+                tab = Table.read(msa_target_info_file)
+                tab = tab[tab['ID']==ID]
+                if len(tab)==0: continue
+
+                prism_min_wav, prism_max_wav = 0.6, 5.3
+                print(float(tab['NRS1 Min Wave']), float(tab['NRS1 Max Wave']), float(tab['NRS2 Min Wave']), float(tab['NRS2 Max Wave']))
+                if tab['NRS1 Max Wave'] == -1: # spectrum only in NRS2
+                    if tab['NRS2 Min Wave'] == -1:
+                        min_wav = prism_min_wav
+                    else:
+                        min_wav = float(tab['NRS2 Min Wave'])
+                    if tab['NRS2 Max Wave'] == -2:
+                        max_wav = prism_max_wav
+                    else:
+                        max_wav = float(tab['NRS2 Max Wave'])
+                    break_wav1, break_wav2 = min_wav, min_wav
+                elif tab['NRS2 Min Wave'] == -2: # spectrum only in NRS1
+                    if tab['NRS1 Min Wave'] == -1:
+                        min_wav = prism_min_wav
+                    else:
+                        min_wav = float(tab['NRS1 Min Wave'])
+                    if tab['NRS1 Max Wave'] == -2:
+                        max_wav = prism_max_wav
+                    else:
+                        max_wav = float(tab['NRS2 Max Wave'])
+                    break_wav1, break_wav2 = min_wav, min_wav
+                else:
+                    min_wav, max_wav = prism_min_wav, prism_max_wav
+                    break_wav1, break_wav2 = float(tab['NRS1 Max Wave']), float(tab['NRS2 Min Wave'])
+
+                ax_sed.fill_between([min_wav, break_wav1],[1e-10]*2,[1e10]*2,edgecolor='none', facecolor='k',alpha=0.04,zorder=-999)
+                ax_sed.fill_between([break_wav2, max_wav],[1e-10]*2,[1e10]*2,edgecolor='none', facecolor='k',alpha=0.04,zorder=-999)
+
+
+
 
         
         ax_sed.legend(loc='lower right',  markerfirst=False, fontsize=7)#, title=legend_title)
