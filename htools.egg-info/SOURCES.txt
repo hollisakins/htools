@@ -8,6 +8,7 @@ htools/eazy_helpers.py
 htools/firsed.py
 htools/imaging.py
 htools/istarmap.py
+htools/jwst_utils.py
 htools/pcigale_helpers.py
 htools/prospector_helpers.py
 htools/utils.py

@@ -16,7 +16,7 @@ from astropy.wcs import FITSFixedWarning
 from astropy.nddata.utils import NoOverlapError
 warnings.simplefilter('ignore', FITSFixedWarning)
 warnings.simplefilter('ignore')
-
+import glob
 from .imaging import gen_rgb_image
 from .utils import get_lameff, get_lamrange#, gen_cutout
 from .eazy_helpers import get_obs_sed,get_tem_sed, get_pz, load_eazy_catalog
@@ -50,13 +50,18 @@ def get_filepath(field, band, ext, tile=None):
     import socket
     hostname = socket.gethostname()
     if hostname == 'cns-s-pmaa65432': # my desktop
+<<<<<<< HEAD
         simmons_prefix = '/Users/hba423/simmons//'
+=======
+        simmons_prefix = '/V/simmons/'
+>>>>>>> 55572f3 (test)
     else: # otherwise, on hard drive
         simmons_prefix = '/V/simmons/'
     ############################
 
     ############################ for ground-based images
     if field in ['cosmos-web','primer-cosmos']:
+<<<<<<< HEAD
         if band in ['Y','J','H','Ks']:
             if not ext.startswith('sci') or ext.startswith('wht'): 
                 raise Exception('we dont have ERR maps for UVISTA! only SCI, WHT')
@@ -71,6 +76,46 @@ def get_filepath(field, band, ext, tile=None):
                 filepath, hdu_index = f'{simmons_prefix}/data/cosmos/mosaics/cutout-HSC-{band.upper()}-9813-pdr3_dud_rev_{ext}_zp-28.09_{tile}.fits', 0
             elif tile.startswith('B'):
                 filepath, hdu_index = f'{simmons_prefix}/data/cosmos/mosaics/{tile}--cutout-HSC-{band.upper()}-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+=======
+        if band.startswith('IRAC'):
+            if ext == 'sci':
+                filepath, hdu_index = f"{simmons_prefix}/cosmos-web/mosaics_ground/irac.{band.split('IRAC')[-1]}.mosaic.Fconv_resamp015_zp-28.09_{tile}.fits", 0
+            elif ext == 'wht':
+                filepath, hdu_index = f"{simmons_prefix}/cosmos-web/mosaics_ground/irac.{band.split('IRAC')[-1]}.mosaic.Fconv_resamp015_weight_zp-28.09_{tile}.fits", 0
+            else:
+                raise Exception('we dont have ERR maps for IRAC! only SCI,WHT')
+
+        if band in ['NB118','Y','J','H','Ks']:
+            if ext == 'sci': 
+                filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/UVISTA_{band}_12_01_24_allpaw_skysub_015_dr6_rc_v1_zp-28.09_{tile}.fits', 0
+            elif ext == 'wht': 
+                filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/UVISTA_{band}_12_01_24_allpaw_skysub_015_dr6_rc_v1.weight_zp-28.09_{tile}.fits', 0
+            else:
+                raise Exception('we dont have ERR maps for UVISTA! only SCI, WHT')
+            
+        if band in ['g','r','i','z','y']:
+            if ext in ['sci','wht']:
+                if tile in ['A4', 'A5', 'A9', 'A10']:
+                    if band=='g': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-G-9813-pdr3_dud_rev-230413-130357_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='r': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-R-9813-pdr3_dud_rev-230413-130346_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='i': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-I-9813-pdr3_dud_rev-230413-130351_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='z': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-Z-9813-pdr3_dud_rev-230413-130355_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='y': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-Y-9813-pdr3_dud_rev-230413-130357_{ext}_zp-28.09_{tile}.fits', 0
+                elif tile in ['A1', 'A2', 'A3', 'A8', 'A7', 'A6']:
+                    if band=='g': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-G-9813-pdr3_dud_rev-230412-135737_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='r': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-R-9813-pdr3_dud_rev-230413-121613_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='i': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-I-9813-pdr3_dud_rev-230413-121625_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='z': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-Z-9813-pdr3_dud_rev-230413-121629_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='y': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-Y-9813-pdr3_dud_rev-230413-121631_{ext}_zp-28.09_{tile}.fits', 0
+                else:
+                    if band=='g': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/{tile}--cutout-HSC-G-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='r': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/{tile}--cutout-HSC-R-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='i': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/{tile}--cutout-HSC-I-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='z': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/{tile}--cutout-HSC-Z-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='y': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/{tile}--cutout-HSC-Y-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+            else:
+                raise Exception('we dont have ERR maps for HSC! only SCI,WHT')
+>>>>>>> 55572f3 (test)
 
     # if len(suffix)>0:
     #     typ += f'_{suffix}'
@@ -80,6 +125,7 @@ def get_filepath(field, band, ext, tile=None):
             if ext.startswith('sci'): ext = ext.replace('sci','drz')
         if tile.startswith('B'):
             if band=='f814w':
+<<<<<<< HEAD
                 filepath, hdu_index = f'{simmons_prefix}/data/cosmos-web/mosaics/mosaic_cosmos_web_2024jan_30mas_tile_{tile}_hst_acs_wfc_f814w_{ext}.fits', 0
             elif band=='f770w':
                 filepath, hdu_index = f'{simmons_prefix}/data/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_30mas_{tile}_{ext}.fits', 1
@@ -95,6 +141,29 @@ def get_filepath(field, band, ext, tile=None):
                     hdu_index = 0
             elif band in ['f115w','f150w','f277w','f444w']:
                 filepath, hdu_index = f'{simmons_prefix}/data/cosmos-web/mosaics/mosaic_nircam_{band}_COSMOS-Web_30mas_{tile}_{ext}.fits', 0
+=======
+                filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_cosmos_web_2024jan_30mas_tile_{tile}_hst_acs_wfc_f814w_{ext}.fits', 0
+            elif band=='f770w':
+                if tile in ['B1','B2','B3','B4','B5','B6','B7','B8','B9']:
+                    filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_30mas_{tile}_v0_7_{ext}.fits', 1
+                if tile in ['B10']:
+                    filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_30mas_{tile}_v0_6_{ext}.fits', 1
+            elif band in ['f115w','f150w','f277w','f444w']:
+                filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_nircam_{band}_COSMOS-Web_30mas_{tile}_v0_8_{ext}.fits', 0
+                # if 'psfMatched' in ext: hdu_index=0
+        elif tile.startswith('A'):
+            if band=='f814w':
+                filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_cosmos_web_2023apr_30mas_tile_{tile}_hst_acs_wfc_f814w_{ext}.fits', 0
+            elif band=='f770w':
+                if tile in ['A1']:
+                    filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_30mas_{tile}_v0_7_{ext}.fits', 1           
+                if tile in ['A2','A3','A4','A5','A6','A8']:
+                    filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_30mas_{tile}_v0_6_{ext}.fits', 1           
+                if tile in ['A7','A9','A10']:
+                    filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_30mas_{tile}_v0_3_{ext}.fits', 0           
+            elif band in ['f115w','f150w','f277w','f444w']:
+                filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_nircam_{band}_COSMOS-Web_30mas_{tile}_v0_8_{ext}.fits', 0
+>>>>>>> 55572f3 (test)
                 # if 'psfMatched' in ext: hdu_index=0
 
         else:
@@ -105,6 +174,7 @@ def get_filepath(field, band, ext, tile=None):
     elif field=='primer-cosmos':
         if band in ['f606w','f814w']:
             if ext.startswith('sci'): ext = ext.replace('sci','drz')
+<<<<<<< HEAD
             filepath, hdu_index = f'{simmons_prefix}/data/primer/mosaics/mosaic_cosmos_primer_30mas_acs_wfc_{band}_{ext}.fits', 1
         elif band in ['f125w','f160w']:
             if ext.startswith('sci'): ext = ext.replace('sci','drz')
@@ -113,6 +183,16 @@ def get_filepath(field, band, ext, tile=None):
             filepath, hdu_index = f'{simmons_prefix}/data/primer/mosaics/mosaic_miri_{band}_PRIMER-COSMOS_60mas_{ext}.fits', 1
         elif band in ['f090w','f115w','f150w','f200w','f277w','f356w','f410m','f444w']:
             filepath, hdu_index = f'{simmons_prefix}/data/primer/mosaics/mosaic_nircam_{band}_PRIMER-COSMOS_30mas_{ext}.fits', 1
+=======
+            filepath, hdu_index = f'{simmons_prefix}/primer/mosaics/mosaic_cosmos_primer_30mas_acs_wfc_{band}_{ext}.fits', 0
+        elif band in ['f125w','f160w']:
+            if ext.startswith('sci'): ext = ext.replace('sci','drz')
+            filepath, hdu_index = f'{simmons_prefix}/primer/mosaics/mosaic_cosmos_primer_30mas_wfc3_ir_{band}_{ext}.fits', 1
+        elif band in ['f770w','f1800w']:
+            filepath, hdu_index = f'{simmons_prefix}/primer/mosaics/mosaic_miri_{band}_PRIMER-COSMOS_30mas_{ext}.fits', 0
+        elif band in ['f090w','f115w','f150w','f200w','f277w','f356w','f410m','f444w']:
+            filepath, hdu_index = f'{simmons_prefix}/primer/mosaics/mosaic_nircam_{band}_PRIMER-COSMOS_30mas_{ext}.fits', 0
+>>>>>>> 55572f3 (test)
 
     elif field=='ceers':
         if band in ['f606w','f814w','f105w','f125w','f140w','f160w']:
@@ -120,26 +200,43 @@ def get_filepath(field, band, ext, tile=None):
             if ext=='sci_pfMatched': raise Exception("I don't yet have PSF matched mosaics for CEERS")
             
             if band in ['f606w','f814w']:
+<<<<<<< HEAD
                 if ext=='sci': filepath, hdu_index = f'{simmons_prefix}/data/ceers/mosaics/{tile}/egs_all_acs_wfc_{band}_030mas_v1.9_{tile}_mbkgsub1.fits', 0
                 if ext=='err': filepath, hdu_index = f'{simmons_prefix}/data/ceers/mosaics/{tile}/egs_all_acs_wfc_{band}_030mas_v1.9_{tile}_rms.fits', 0
             elif band in ['f105w','f125w','f140w','f160w']:
                 if ext=='sci': filepath, hdu_index = f'{simmons_prefix}/data/ceers/mosaics/{tile}/egs_all_wfc3_ir_{band}_030mas_v1.9_{tile}_mbkgsub1.fits', 0
                 if ext=='err': filepath, hdu_index = f'{simmons_prefix}/data/ceers/mosaics/{tile}/egs_all_wfc3_ir_{band}_030mas_v1.9.1_{tile}_rms.fits', 0
+=======
+                if ext=='sci': filepath, hdu_index = f'{simmons_prefix}/ceers/mosaics/{tile}/egs_all_acs_wfc_{band}_030mas_v1.9_{tile}_mbkgsub1.fits', 0
+                if ext=='err': filepath, hdu_index = f'{simmons_prefix}/ceers/mosaics/{tile}/egs_all_acs_wfc_{band}_030mas_v1.9_{tile}_rms.fits', 0
+            elif band in ['f105w','f125w','f140w','f160w']:
+                if ext=='sci': filepath, hdu_index = f'{simmons_prefix}/ceers/mosaics/{tile}/egs_all_wfc3_ir_{band}_030mas_v1.9_{tile}_mbkgsub1.fits', 0
+                if ext=='err': filepath, hdu_index = f'{simmons_prefix}/ceers/mosaics/{tile}/egs_all_wfc3_ir_{band}_030mas_v1.9.1_{tile}_rms.fits', 0
+>>>>>>> 55572f3 (test)
         elif band in ['f115w','f150w','f200w','f277w','f356w','f410m','f444w']:
             if ext=='sci': hdu_index=1
             if ext=='err': hdu_index=3
             if ext=='wht': hdu_index=5
+<<<<<<< HEAD
             if ext=='sci_pfMatched': raise Exception("I don't yet have PSF matched mosaics for CEERS")            
             filepath = f'{simmons_prefix}/data/ceers/mosaics/{tile}/ceers_{tile}_{band}_v1_mbkgsub1.fits'
+=======
+            if ext=='sci_psfMatched': raise Exception("I don't yet have PSF matched mosaics for CEERS")            
+            filepath = f'{simmons_prefix}/ceers/mosaics/{tile}/ceers_{tile}_{band}_v1_mbkgsub1.fits'
+>>>>>>> 55572f3 (test)
         elif band in ['f560w','f770w']:
             if ext=='sci': hdu_index=1
             if ext=='err': hdu_index=2
             if ext=='wht': hdu_index=4
             if ext=='sci_pfMatched': raise Exception("I don't yet have PSF matched mosaics for CEERS")            
+<<<<<<< HEAD
             if hostname == 'cns-s-pmaa65432':
                 filepath = f'{simmons_prefix}/data/ceers/mosaics/{tile}/ceers_{tile}_{band}_i2d.fits'
             else:
                 filepath = f'/data/ceers/mosaics/{tile}/ceers_{tile}_{band}_i2d.fits'
+=======
+            filepath = f'{simmons_prefix}/ceers/mosaics/{tile}/ceers_{tile}_{band}_i2d.fits'
+>>>>>>> 55572f3 (test)
 
 
     else:
@@ -193,8 +290,16 @@ def load_image(field, band, ext, tile=None, convert_units=False):
 
     return data, header
 
+<<<<<<< HEAD
 def load_hdr(field, band, tile=None):
     return load_image(field, band, 'sci', tile)[1]
+=======
+def load_hdr(field, band, tile=None, suffix=None):
+    if suffix:
+        return load_image(field, band, f'sci_{suffix}', tile)[1]
+    else:
+        return load_image(field, band, 'sci', tile)[1]
+>>>>>>> 55572f3 (test)
 def load_sci(field, band, tile=None, convert_units=False, suffix=None):
     if suffix:
         return load_image(field, band, f'sci_{suffix}', tile, convert_units=convert_units)[0]
@@ -298,6 +403,7 @@ def gen_detec_cutout(field, tile, coord, width):
     import socket 
     hostname = socket.gethostname()
     if hostname=='cns-s-pmaa65432':
+<<<<<<< HEAD
         simmons_prefix = '/Users/hba423/simmons//'
     else:
         simmons_prefix = '/V/simmons/'
@@ -307,6 +413,17 @@ def gen_detec_cutout(field, tile, coord, width):
     elif field=='cosmos-web':
         sci = fits.getdata(f'{simmons_prefix}/data/cosmos-web/mosaics/detection_chi2pos_SWLW_{tile}.fits')
         wcs = WCS(fits.getheader(f'{simmons_prefix}/data/cosmos-web/mosaics/detection_chi2pos_SWLW_{tile}.fits'))
+=======
+        simmons_prefix = '/V/simmons/'
+    else:
+        simmons_prefix = '/V/simmons/'
+    if field=='primer-cosmos':
+        sci = fits.getdata(f'{simmons_prefix}/primer/mosaics/detection_chi2pos_SWLW_primer-cosmos.fits')
+        wcs = WCS(fits.getheader(f'{simmons_prefix}/primer/mosaics/detection_chi2pos_SWLW_primer-cosmos.fits'))
+    elif field=='cosmos-web':
+        sci = fits.getdata(f'{simmons_prefix}/cosmos-web/mosaics/detection_chi2pos_SWLW_{tile}.fits')
+        wcs = WCS(fits.getheader(f'{simmons_prefix}/cosmos-web/mosaics/detection_chi2pos_SWLW_{tile}.fits'))
+>>>>>>> 55572f3 (test)
     cutout = Cutout2D(sci, coord, width, wcs=wcs)
     ps = cutout.wcs.proj_plane_pixel_scales()[0].to(u.arcsec).value
     size = np.shape(cutout.data)[0]
@@ -324,6 +441,7 @@ def gen_segm_cutout(field, tile, coord, width):
     import socket 
     hostname = socket.gethostname()
     if hostname=='cns-s-pmaa65432':
+<<<<<<< HEAD
         simmons_prefix = '/Users/hba423/simmons//'
     else:
         simmons_prefix = '/V/simmons/'
@@ -331,6 +449,15 @@ def gen_segm_cutout(field, tile, coord, width):
         segm = np.load(f'{simmons_prefix}/data/primer/mosaics/detection_chi2pos_SWLW_primer-cosmos_{tile}_segmap.npy')
         detec = fits.getdata(f'{simmons_prefix}/data/primer/mosaics/detection_chi2pos_SWLW_primer-cosmos.fits')
         wcs = WCS(fits.getheader(f'{simmons_prefix}/data/primer/mosaics/detection_chi2pos_SWLW_primer-cosmos.fits'))
+=======
+        simmons_prefix = '/V/simmons/'
+    else:
+        simmons_prefix = '/V/simmons/'
+    if field=='primer-cosmos':
+        segm = np.load(f'{simmons_prefix}/primer/mosaics/detection_chi2pos_SWLW_primer-cosmos_{tile}_segmap.npy')
+        detec = fits.getdata(f'{simmons_prefix}/primer/mosaics/detection_chi2pos_SWLW_primer-cosmos.fits')
+        wcs = WCS(fits.getheader(f'{simmons_prefix}/primer/mosaics/detection_chi2pos_SWLW_primer-cosmos.fits'))
+>>>>>>> 55572f3 (test)
         if tile == 'south':
             c0 = wcs.pixel_to_world(12480, 12500)
             cutout = Cutout2D(detec, c0, size=[11.0*u.arcmin,9.8*u.arcmin], wcs=wcs)
@@ -339,8 +466,13 @@ def gen_segm_cutout(field, tile, coord, width):
             cutout = Cutout2D(detec, c0, size=[11.0*u.arcmin,9.8*u.arcmin], wcs=wcs)
         wcs = cutout.wcs
     elif field=='cosmos-web':
+<<<<<<< HEAD
         segm = np.load(f'{simmons_prefix}/data/cosmos-web/mosaics/detection_chi2pos_SWLW_{tile}_segmap.npy')
         wcs = WCS(fits.getheader(f'{simmons_prefix}/data/cosmos-web/mosaics/detection_chi2pos_SWLW_{tile}.fits'))
+=======
+        segm = fits.getdata(f'{simmons_prefix}/cosmos-web/mosaics/detection_chi2pos_SWLW_{tile}_segmap_cleaned_v1.2.fits')
+        wcs = WCS(fits.getheader(f'{simmons_prefix}/cosmos-web/mosaics/detection_chi2pos_SWLW_{tile}.fits'))
+>>>>>>> 55572f3 (test)
 
     cutout = Cutout2D(segm, coord, width, wcs=wcs)
     ps = cutout.wcs.proj_plane_pixel_scales()[0].to(u.arcsec).value
@@ -389,6 +521,7 @@ def make_inspection_plot(ID,
                          msa_target_info=None,
                          show=False, 
                          verbose=True):
+                         
     with plt.style.context(('hba_sans')):
         input_catalog = f'{catalog_path}/{catalog}'
         catalog = fits.getdata(input_catalog)
@@ -411,7 +544,7 @@ def make_inspection_plot(ID,
             if verbose: print(f'Increasing cutout_width to {cutout_width.value:.2f}')
 
         if field in ['cosmos-web','primer-cosmos']:    
-            secondary_catalog = f'/data/COSMOS-Web/catalogs/COSMOSWeb_master_v2.0.0-sersic-cgs.fits'
+            secondary_catalog = f'/data/COSMOS-Web/catalogs/COSMOSWeb_JAN24_v3.0.0_assoc_cold+hot_sersic_cgs.fits'
             cat_sepp = fits.getdata(secondary_catalog)
             sepplus_coords = SkyCoord(ra=cat_sepp['RA_DETEC'], dec=cat_sepp['DEC_DETEC'], unit='deg')
             sep = coord.separation(sepplus_coords).to(u.arcsec).value
@@ -564,11 +697,19 @@ def make_inspection_plot(ID,
             ax = cutout_axes[i]
             cutout = cutouts[i]
             if cutout is not None:
+<<<<<<< HEAD
                 if np.all(np.isnan(cutout.snr)):
                     ax.imshow(np.zeros_like(cutout.snr), vmin=vmin,vmax=vmax, cmap='Greys', origin='lower', extent=cutout.extent)
                 else:
                     ax.imshow(cutout.snr, vmin=vmin, vmax=vmax, cmap='Greys', origin='lower', extent=cutout.extent)
                 a, b, theta = cat['kron1_a'], cat['kron1_b'], np.degrees(cat['kron_pa'])
+=======
+                if np.all(np.isnan(cutout.snr)) or np.all(cutout.snr==0):
+                    ax.imshow(np.zeros_like(cutout.snr), vmin=vmin,vmax=vmax, cmap='Greys', origin='lower', extent=cutout.extent)
+                else:
+                    ax.imshow(cutout.snr, vmin=vmin, vmax=vmax, cmap='Greys', origin='lower', extent=cutout.extent)
+                a, b, theta = cat['kron1_a'], cat['kron1_b'], np.degrees(cat['theta_image'])
+>>>>>>> 55572f3 (test)
                 ax.add_patch(mpl.patches.Ellipse((0,0), width=2*a, height=2*b, angle=theta, facecolor='none', edgecolor='salmon', linestyle='-', linewidth=0.5))
                 ax.add_patch(mpl.patches.Circle((0,0), radius=0.15, facecolor='none', edgecolor='w', linestyle='--', linewidth=0.5))
                 if name.startswith('f'):
@@ -578,7 +719,7 @@ def make_inspection_plot(ID,
                     ax.set_xlim(-display_width.to(u.arcsec).value, display_width.to(u.arcsec).value)
                     ax.set_ylim(-display_width.to(u.arcsec).value, display_width.to(u.arcsec).value)
             else:
-                ax.imshow(np.zeros((100,100)))
+                ax.imshow(np.zeros((100,100)), vmin=vmin,vmax=vmax, cmap='Greys')
             # ax.imshow(dist, extent=cutout.extent)
             ax.axis('off')
 
@@ -597,8 +738,8 @@ def make_inspection_plot(ID,
             except:
                 ax.imshow(np.zeros((100,100)), vmin=-3, vmax=8, cmap='Greys', origin='lower', extent=[-display_width.to(u.arcsec).value, display_width.to(u.arcsec).value, -display_width.to(u.arcsec).value, display_width.to(u.arcsec).value])
                 pass
-            ax.set_xlim(-display_width.to(u.arcsec).value, display_width.to(u.arcsec).value)
-            ax.set_ylim(-display_width.to(u.arcsec).value, display_width.to(u.arcsec).value)
+            ax.set_xlim(-2*display_width.to(u.arcsec).value, 2*display_width.to(u.arcsec).value)
+            ax.set_ylim(-2*display_width.to(u.arcsec).value, 2*display_width.to(u.arcsec).value)
             ax.axis('off')
             ax.set_aspect('equal')
 
@@ -777,7 +918,7 @@ def make_inspection_plot(ID,
         ax_detc.set_xlabel(r'DETECTION')
         ax_detc.set_xlim(-display_width.to(u.arcsec).value/2, display_width.to(u.arcsec).value/2)
         ax_detc.set_ylim(-display_width.to(u.arcsec).value/2, display_width.to(u.arcsec).value/2)
-        a, b, theta = cat['kron1_a'], cat['kron1_b'], np.degrees(cat['kron_pa'])
+        a, b, theta = cat['kron1_a'], cat['kron1_b'], np.degrees(cat['theta_image'])
         ax_detc.add_patch(mpl.patches.Ellipse((0,0), width=2*a, height=2*b, angle=theta, facecolor='none', edgecolor='salmon', linestyle='-', linewidth=0.5))
         ax_detc.add_patch(mpl.patches.Circle((0,0), radius=0.15, facecolor='none', edgecolor='w', linestyle='--', linewidth=0.5))
 
@@ -852,13 +993,13 @@ def make_inspection_plot(ID,
 
         if field in ['cosmos-web','primer-cosmos']:
             if i_sepplus>=0:
-                filters = ['subaru_hsc_g','subaru_hsc_r','subaru_hsc_i','subaru_hsc_z','subaru_hsc_y','uvista_Y', 'uvista_J', 'uvista_H', 'uvista_Ks']
+                filters = ['subaru_hsc_g','subaru_hsc_r','subaru_hsc_i','subaru_hsc_z','subaru_hsc_y','uvista_Y', 'uvista_J', 'uvista_H', 'uvista_Ks','spitzer_irac_ch1','spitzer_irac_ch3','spitzer_irac_ch4','hst_acs_f814w','jwst_nircam_f115w','jwst_nircam_f150w','jwst_nircam_f277w','jwst_nircam_f444w','jwst_miri_f770w']
                 wav = get_lameff(filters)
                 wav_min, wav_max = get_lamrange(filters)
-                flux = np.array([cat_sepp[f'FLUX_MODEL_{b}'][i_sepplus] for b in ['HSC-g','HSC-r','HSC-i','HSC-z','HSC-y', 'UVISTA-Y', 'UVISTA-J', 'UVISTA-H', 'UVISTA-Ks']])*1e29
-                flux_err = np.array([cat_sepp[f'FLUX_ERR_MODEL_{b}'][i_sepplus] for b in ['HSC-g','HSC-r','HSC-i','HSC-z','HSC-y', 'UVISTA-Y', 'UVISTA-J', 'UVISTA-H', 'UVISTA-Ks']])*1e29
-                depths = np.array([28.1, 27.8, 27.6, 27.2, 26.5, 26.02, 25.85, 25.48, 25.14])        
-                flux_err = np.sqrt(flux_err**2 + (3631e6*np.power(10., -0.4*depths)/5)**2)
+                flux = np.array([cat_sepp[f'FLUX_MODEL_{b}'][i_sepplus] for b in ['HSC-g','HSC-r','HSC-i','HSC-z','HSC-y', 'UVISTA-Y', 'UVISTA-J', 'UVISTA-H', 'UVISTA-Ks', 'IRAC-ch1', 'IRAC-ch2', 'IRAC-ch3', 'HST-F814W', 'F115W', 'F150W', 'F277W', 'F444W', 'F770W']])*1e29
+                flux_err = np.array([cat_sepp[f'FLUX_ERR_MODEL_{b}'][i_sepplus] for b in ['HSC-g','HSC-r','HSC-i','HSC-z','HSC-y', 'UVISTA-Y', 'UVISTA-J', 'UVISTA-H', 'UVISTA-Ks', 'IRAC-ch1', 'IRAC-ch2', 'IRAC-ch3', 'HST-F814W', 'F115W', 'F150W', 'F277W', 'F444W', 'F770W']])*1e29
+                # depths = np.array([28.1, 27.8, 27.6, 27.2, 26.5, 26.02, 25.85, 25.48, 25.14, ])        
+                # flux_err = np.sqrt(flux_err**2 + (3631e6*np.power(10., -0.4*depths)/5)**2)
                 c2 = np.array(['lightblue']*len(filters))
                 ID_sepplus = cat_sepp['ID'][i_sepplus]
                 plot_data(ax_sed, wav, wav_min, wav_max, flux, flux_err, c2, zorder=-1000, annotate=False, label=f'SE++ {ID_sepplus}')
@@ -877,6 +1018,7 @@ def make_inspection_plot(ID,
                 c2 = np.array(['darkorange']*len(filters))
                 plot_data(ax_sed, wav, wav_min, wav_max, flux, flux_err, c2, zorder=-1000, annotate=False, label=f'PRIMER {ID_primer}')
 
+<<<<<<< HEAD
         if eazy_run is not None:
             if type(eazy_run)==str:
                 ezrs = [eazy_run]
@@ -893,6 +1035,35 @@ def make_inspection_plot(ID,
                     chi2 = f['chi2'][f['ID']==ID][0]
                     ax_sed.plot(twav, tflux, label=f'EAzY {suffix}, $z={zbest:.2f}$ ($\chi^2={chi2:.1f}$)', color=ez_c[k], linewidth=1, zorder=5)
 
+=======
+        if field=='cosmos-web' and 'supercatalog_pm' in input_catalog:
+            has_pm = ~np.isnan(cat['f_primer_f1800w'][0])
+            if has_pm:
+                filters = ['jwst_miri_f770w','jwst_miri_f1800w']
+                wav = get_lameff(filters)
+                wav_min, wav_max = get_lamrange(filters)
+                flux = np.array([cat[f'f_primer_{b}'][0] for b in ['f770w','f1800w']])
+                flux_err = np.array([cat[f'e_primer_{b}'][0] for b in ['f770w','f1800w']])
+                c2 = np.array(['darkorange']*len(filters))
+                plot_data(ax_sed, wav, wav_min, wav_max, flux, flux_err, c2, zorder=-1000, annotate=False)
+
+        if eazy_run is not None:
+            if type(eazy_run)==str:
+                ezrs = [eazy_run]
+            else:
+                ezrs = eazy_run
+            
+            ez_c = ['slategrey','mediumslateblue']
+            for k,ezr in enumerate(ezrs):
+                if verbose: print('\t Plotting EAzY results...')
+                try:
+                    suffix = ezr.split('_')[-1]
+                    twav, tflux, zbest = get_tem_sed(main=ezr, outdir=eazy_outdir, which=ID)
+                    f = load_eazy_catalog(main=ezr, outdir=eazy_outdir, ext=1)
+                    chi2 = f['chi2'][f['ID']==ID][0]
+                    ax_sed.plot(twav, tflux, label=f'EAzY {suffix}, $z={zbest:.2f}$ ($\chi^2={chi2:.1f}$)', color=ez_c[k], linewidth=1, zorder=5)
+
+>>>>>>> 55572f3 (test)
                     ### P(z)
                     z, Pz = get_pz(main=ezr, outdir=eazy_outdir, which=ID)
                     Pz /= np.nanmax(Pz)
@@ -1073,13 +1244,13 @@ def make_inspection_plot(ID,
 # #     c = SkyCoord(ra=f[f['id']==i]['RA_DETEC'][0], dec=f[f['id']==i]['DEC_DETEC'][0], unit='deg')
 # #     print(c.to_string('hmsdms', precision=2))
 
-def find_nearest(c, matching_radius=0.5, catalog='/data/COSMOS-Web/catalogs/COSMOS-Web_supercatalog_v0.7.fits'):
+def find_nearest(c, matching_radius=0.5, catalog='/data/COSMOS-Web/catalogs/COSMOS-Web_hot+cold_aperture_catalog_v1.2.fits'):
     f = fits.getdata(catalog)
     cs = SkyCoord(f['ra'], f['dec'], unit='deg')
     sep = cs.separation(c).to(u.arcsec).value
     i = np.argmin(sep)
     if sep[i]<matching_radius:
-        print(f"Found match {f['id'][i]} located {sep[i]:.2f}'' away")
+        print(f"Found match {f['id'][i]} located {sep[i]:.2f}'' away in tile {f['tile'][i]}")
         return f['id'][i]
     else:
         print(f"No match within {matching_radius:.2f}''")

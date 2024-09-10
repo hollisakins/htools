@@ -4,3 +4,8 @@ Version: 0.1.0
 Summary: Research Tools for Hollis Akins
 Author: Hollis Akins
 License: MIT
+Requires-Dist: astropy
+Requires-Dist: numpy
+Requires-Dist: matplotlib
+Requires-Dist: scipy
+Requires-Dist: tqdm
