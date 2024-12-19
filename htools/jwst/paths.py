@@ -194,49 +194,94 @@ def get_cosmos_filepath(band, ext, tile=None):
 
     if ext not in ['sci','wht']:
         raise ValueError(f"{ext} not understood")
-
-    if band.startswith('IRAC'):
-        if tile is not None:
-            if ext == 'sci':
-                filepath, hdu_index = f"/V/simmons/cosmos-web/mosaics_ground/irac.{band.split('IRAC')[-1]}.mosaic.Fconv_resamp015_zp-28.09_{tile}.fits", 0
+    if host.hostname == 'patrick':
+        if band.startswith('IRAC'):
+            if tile is not None:
+                if ext == 'sci':
+                    filepath, hdu_index = f"/V/simmons/cosmos-web/mosaics_ground/irac.{band.split('IRAC')[-1]}.mosaic.Fconv_resamp015_zp-28.09_{tile}.fits", 0
+                else:
+                    filepath, hdu_index = f"/V/simmons/cosmos-web/mosaics_ground/irac.{band.split('IRAC')[-1]}.mosaic.Fconv_resamp015_weight_zp-28.09_{tile}.fits", 0
             else:
-                filepath, hdu_index = f"/V/simmons/cosmos-web/mosaics_ground/irac.{band.split('IRAC')[-1]}.mosaic.Fconv_resamp015_weight_zp-28.09_{tile}.fits", 0
-        else:
-            # load full area IRAC mosaics
-            raise NotImplementedError("IRAC mosaics for the full COSMOS area not implemented ")
+                # load full area IRAC mosaics
+                raise NotImplementedError("IRAC mosaics for the full COSMOS area not implemented ")
 
-    if band in ['NB118','Y','J','H','Ks']:
-        if tile is not None:
-            if ext == 'sci': 
-                filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/UVISTA_{band}_12_01_24_allpaw_skysub_015_dr6_rc_v1_zp-28.09_{tile}.fits', 0
-            else: 
-                filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/UVISTA_{band}_12_01_24_allpaw_skysub_015_dr6_rc_v1.weight_zp-28.09_{tile}.fits', 0
-        else:
-            # load full area UVISTA mosaics
-            raise NotImplementedError("UVISTA mosaics for the full COSMOS area not implemented ")
-        
-    if band in ['g','r','i','z','y']:
-        if tile is not None:
-            if tile in ['A4', 'A5', 'A9', 'A10']:
-                if band=='g': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-G-9813-pdr3_dud_rev-230413-130357_{ext}_zp-28.09_{tile}.fits', 0
-                if band=='r': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-R-9813-pdr3_dud_rev-230413-130346_{ext}_zp-28.09_{tile}.fits', 0
-                if band=='i': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-I-9813-pdr3_dud_rev-230413-130351_{ext}_zp-28.09_{tile}.fits', 0
-                if band=='z': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-Z-9813-pdr3_dud_rev-230413-130355_{ext}_zp-28.09_{tile}.fits', 0
-                if band=='y': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-Y-9813-pdr3_dud_rev-230413-130357_{ext}_zp-28.09_{tile}.fits', 0
-            elif tile in ['A1', 'A2', 'A3', 'A8', 'A7', 'A6']:
-                if band=='g': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-G-9813-pdr3_dud_rev-230412-135737_{ext}_zp-28.09_{tile}.fits', 0
-                if band=='r': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-R-9813-pdr3_dud_rev-230413-121613_{ext}_zp-28.09_{tile}.fits', 0
-                if band=='i': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-I-9813-pdr3_dud_rev-230413-121625_{ext}_zp-28.09_{tile}.fits', 0
-                if band=='z': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-Z-9813-pdr3_dud_rev-230413-121629_{ext}_zp-28.09_{tile}.fits', 0
-                if band=='y': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-Y-9813-pdr3_dud_rev-230413-121631_{ext}_zp-28.09_{tile}.fits', 0
+        if band in ['NB118','Y','J','H','Ks']:
+            if tile is not None:
+                if ext == 'sci': 
+                    filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/UVISTA_{band}_12_01_24_allpaw_skysub_015_dr6_rc_v1_zp-28.09_{tile}.fits', 0
+                else: 
+                    filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/UVISTA_{band}_12_01_24_allpaw_skysub_015_dr6_rc_v1.weight_zp-28.09_{tile}.fits', 0
             else:
-                if band=='g': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/{tile}--cutout-HSC-G-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
-                if band=='r': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/{tile}--cutout-HSC-R-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
-                if band=='i': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/{tile}--cutout-HSC-I-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
-                if band=='z': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/{tile}--cutout-HSC-Z-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
-                if band=='y': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/{tile}--cutout-HSC-Y-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
-        else:
-            raise NotImplementedError("HSC mosaics for the full COSMOS area not implemented ")
-            # load full area HSC mosaics
+                # load full area UVISTA mosaics
+                raise NotImplementedError("UVISTA mosaics for the full COSMOS area not implemented ")
+            
+        if band in ['g','r','i','z','y']:
+            if tile is not None:
+                if tile in ['A4', 'A5', 'A9', 'A10']:
+                    if band=='g': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-G-9813-pdr3_dud_rev-230413-130357_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='r': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-R-9813-pdr3_dud_rev-230413-130346_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='i': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-I-9813-pdr3_dud_rev-230413-130351_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='z': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-Z-9813-pdr3_dud_rev-230413-130355_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='y': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-Y-9813-pdr3_dud_rev-230413-130357_{ext}_zp-28.09_{tile}.fits', 0
+                elif tile in ['A1', 'A2', 'A3', 'A8', 'A7', 'A6']:
+                    if band=='g': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-G-9813-pdr3_dud_rev-230412-135737_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='r': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-R-9813-pdr3_dud_rev-230413-121613_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='i': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-I-9813-pdr3_dud_rev-230413-121625_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='z': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-Z-9813-pdr3_dud_rev-230413-121629_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='y': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/cutout-HSC-Y-9813-pdr3_dud_rev-230413-121631_{ext}_zp-28.09_{tile}.fits', 0
+                else:
+                    if band=='g': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/{tile}--cutout-HSC-G-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='r': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/{tile}--cutout-HSC-R-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='i': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/{tile}--cutout-HSC-I-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='z': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/{tile}--cutout-HSC-Z-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='y': filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_ground/{tile}--cutout-HSC-Y-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+            else:
+                raise NotImplementedError("HSC mosaics for the full COSMOS area not implemented ")
+                # load full area HSC mosaics
+    
+    elif host.hostname == 'candide':
+        if band.startswith('IRAC'):
+            if tile is not None:
+                if ext == 'sci':
+                    filepath, hdu_index = f"/n23data2/hakins/exchg/grounddata/irac.{band.split('IRAC')[-1]}.mosaic.Fconv_resamp015_zp-28.09_{tile}.fits", 0
+                else:
+                    filepath, hdu_index = f"/n23data2/hakins/exchg/grounddata/irac.{band.split('IRAC')[-1]}.mosaic.Fconv_resamp015_weight_zp-28.09_{tile}.fits", 0
+            else:
+                # load full area IRAC mosaics
+                raise NotImplementedError("IRAC mosaics for the full COSMOS area not implemented ")
+
+        if band in ['NB118','Y','J','H','Ks']:
+            if tile is not None:
+                if ext == 'sci': 
+                    filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/UVISTA_{band}_12_01_24_allpaw_skysub_015_dr6_rc_v1_zp-28.09_{tile}.fits', 0
+                else: 
+                    filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/UVISTA_{band}_12_01_24_allpaw_skysub_015_dr6_rc_v1.weight_zp-28.09_{tile}.fits', 0
+            else:
+                # load full area UVISTA mosaics
+                raise NotImplementedError("UVISTA mosaics for the full COSMOS area not implemented ")
+            
+        if band in ['g','r','i','z','y']:
+            if tile is not None:
+                if tile in ['A4', 'A5', 'A9', 'A10']:
+                    if band=='g': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-HSC-G-9813-pdr3_dud_rev-230413-130357_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='r': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-HSC-R-9813-pdr3_dud_rev-230413-130346_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='i': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-HSC-I-9813-pdr3_dud_rev-230413-130351_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='z': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-HSC-Z-9813-pdr3_dud_rev-230413-130355_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='y': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-HSC-Y-9813-pdr3_dud_rev-230413-130357_{ext}_zp-28.09_{tile}.fits', 0
+                elif tile in ['A1', 'A2', 'A3', 'A8', 'A7', 'A6']:
+                    if band=='g': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-HSC-G-9813-pdr3_dud_rev-230412-135737_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='r': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-HSC-R-9813-pdr3_dud_rev-230413-121613_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='i': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-HSC-I-9813-pdr3_dud_rev-230413-121625_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='z': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-HSC-Z-9813-pdr3_dud_rev-230413-121629_{ext}_zp-28.09_{tile}.fits', 0
+                    if band=='y': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-HSC-Y-9813-pdr3_dud_rev-230413-121631_{ext}_zp-28.09_{tile}.fits', 0
+                else:
+                    if band=='g': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/{tile}--cutout-HSC-G-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='r': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/{tile}--cutout-HSC-R-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='i': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/{tile}--cutout-HSC-I-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='z': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/{tile}--cutout-HSC-Z-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='y': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/{tile}--cutout-HSC-Y-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+            else:
+                raise NotImplementedError("HSC mosaics for the full COSMOS area not implemented ")
+                # load full area HSC mosaics
 
     return filepath, hdu_index
