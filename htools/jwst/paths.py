@@ -101,23 +101,23 @@ def get_cosmos_web_filepath(band, ext, tile, ps='30mas'):
                 filepath, hdu_index = f'/n23data2/cosmosweb/COSMOS-Web_Jan24/ACS/mosaic_cosmos_web_2024jan_{ps}_tile_{tile}_hst_acs_wfc_f814w_{ext}.fits', 0 
             elif band=='f770w':
                 if tile in ['B1','B2','B3','B4','B5','B6','B7','B8','B9']:
-                    filepath, hdu_index = f'/n23data2/cosmosweb/COSMOS-Web_Jan24/MIRI/v0.7/tiles/extensions/mosaic_miri_f770w_COSMOS-Web_{ps}_{tile}_v0_7_{ext}.fits.gz', 1
+                    filepath, hdu_index = f'/n23data2/hakins/COSMOS-Web/mosaics/mosaic_miri_f770w_COSMOS-Web_{ps}_{tile}_v0_7_{ext}.fits', 1
                 if tile in ['B10']:
-                    filepath, hdu_index = f'/n23data2/cosmosweb/COSMOS-Web_Jan24/MIRI/v0.7/tiles/extensions/mosaic_miri_f770w_COSMOS-Web_{ps}_{tile}_v0_6_{ext}.fits.gz', 1
+                    filepath, hdu_index = f'/n23data2/hakins/COSMOS-Web/mosaics/mosaic_miri_f770w_COSMOS-Web_{ps}_{tile}_v0_6_{ext}.fits', 1
             elif band in ['f115w','f150w','f277w','f444w']:
-                filepath, hdu_index = f'/n23data2/cosmosweb/COSMOS-Web_Jan24/NIRCam/v0.8/sci_mosaics/mosaic_nircam_{band}_COSMOS-Web_{ps}_{tile}_v0_8_{ext}.fits.gz', 0
+                filepath, hdu_index = f'/n23data2/hakins/COSMOS-Web/mosaics/mosaic_nircam_{band}_COSMOS-Web_{ps}_{tile}_v0_8_{ext}.fits', 0
         elif tile.startswith('A'):
             if band=='f814w':
                 filepath, hdu_index = f'/n23data2/cosmosweb/COSMOS-Web_Apr23/ACS/mosaic_cosmos_web_2023apr_{ps}_tile_{tile}_hst_acs_wfc_f814w_{ext}.fits', 0
             elif band=='f770w':
                 if tile in ['A1']:
-                    filepath, hdu_index = f'/n23data2/cosmosweb/COSMOS-Web_Jan24/MIRI/v0.7/tiles/extensions/mosaic_miri_f770w_COSMOS-Web_{ps}_{tile}_v0_7_{ext}.fits.gz', 1 
+                    filepath, hdu_index = f'/n23data2/hakins/COSMOS-Web/mosaics/mosaic_miri_f770w_COSMOS-Web_{ps}_{tile}_v0_7_{ext}.fits', 1 
                 if tile in ['A2','A3','A4','A5','A6','A8']:
-                    filepath, hdu_index = f'/n23data2/cosmosweb/COSMOS-Web_Jan24/MIRI/v0.7/tiles/extensions/mosaic_miri_f770w_COSMOS-Web_{ps}_{tile}_v0_6_{ext}.fits.gz', 1
+                    filepath, hdu_index = f'/n23data2/hakins/COSMOS-Web/mosaics/mosaic_miri_f770w_COSMOS-Web_{ps}_{tile}_v0_6_{ext}.fits', 1
                 if tile in ['A7','A9','A10']:
-                    filepath, hdu_index = f'/n23data2/cosmosweb/COSMOS-Web_Apr23/MIRI/v0.3/tiles/mosaic_miri_f770w_COSMOS-Web_{ps}_{tile}_v0_3_{ext}.fits', 0           
+                    filepath, hdu_index = f'/n23data2/hakins/COSMOS-Web/mosaics/mosaic_miri_f770w_COSMOS-Web_{ps}_{tile}_v0_3_{ext}.fits', 0           
             elif band in ['f115w','f150w','f277w','f444w']:
-                filepath, hdu_index = f'/n23data2/cosmosweb/COSMOS-Web_Jan24/NIRCam/v0.8/sci_mosaics/mosaic_nircam_{band}_COSMOS-Web_{ps}_{tile}_v0_8_{ext}.fits.gz', 0
+                filepath, hdu_index = f'/n23data2/hakins/COSMOS-Web/mosaics/mosaic_nircam_{band}_COSMOS-Web_{ps}_{tile}_v0_8_{ext}.fits', 0
     
     return filepath, hdu_index
 
