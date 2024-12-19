@@ -472,7 +472,7 @@ def main(IDs,
             if lephare_spec_path is not None:
                 lph_color = 'steelblue'
                 from .lephare_helpers import LephareResult
-                lph = LephareResult.read(os.path.join(lephare_spec_path, f'ID{ID}.0.spec'))
+                lph = LephareResult.read(os.path.join(lephare_spec_path, f'Id{ID}.0.spec'))
                 lph.pz.normalize()
                 ax_pz.plot(lph.pz.zgrid, lph.pz.Pz, color=lph_color, linewidth=1)
                 ax_pz.fill_between(lph.pz.zgrid, lph.pz.Pz, edgecolor='none', facecolor=lph_color, alpha=0.1)
