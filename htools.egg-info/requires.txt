@@ -3,3 +3,6 @@ numpy
 matplotlib
 scipy
 tqdm
+pandas
+rich
+dotmap

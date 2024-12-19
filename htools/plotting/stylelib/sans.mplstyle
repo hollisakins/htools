@@ -1,0 +1,36 @@
+figure.figsize : 6.4,4.8
+figure.dpi : 100
+savefig.dpi : 300
+figure.constrained_layout.use : False
+
+### FONTS 
+font.family:  sans-serif
+font.style:   normal
+font.variant: normal
+font.weight:  normal
+font.stretch: normal
+font.size:    10.0
+text.usetex : False
+
+xtick.direction : in
+ytick.direction : in
+xtick.top : True
+ytick.right : True
+xtick.minor.visible : True
+ytick.minor.visible : True
+legend.frameon : False
+image.origin : lower
+lines.linewidth : 1
+
+errorbar.capsize : 0
+
+
+axes.linewidth : 0.8
+xtick.major.width : 0.8
+xtick.minor.width : 0.6
+xtick.major.size : 3.5
+xtick.minor.size : 2.0
+ytick.major.width : 0.8
+ytick.minor.width : 0.6
+ytick.major.size : 3.5
+ytick.minor.size : 2.0

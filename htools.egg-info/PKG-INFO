@@ -9,3 +9,6 @@ Requires-Dist: numpy
 Requires-Dist: matplotlib
 Requires-Dist: scipy
 Requires-Dist: tqdm
+Requires-Dist: pandas
+Requires-Dist: rich
+Requires-Dist: dotmap

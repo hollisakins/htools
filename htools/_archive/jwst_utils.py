@@ -1,246 +1,26 @@
-from astropy.io import fits
-import astropy.units as u
-from astropy.coordinates import SkyCoord
-from astropy.wcs import WCS
-from astropy.nddata.utils import Cutout2D
-from astropy.stats import sigma_clipped_stats
-from photutils.aperture import CircularAperture, aperture_photometry
-from astropy.cosmology import Planck18 as cosmo
-import os, sys, tqdm
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-from copy import copy, deepcopy
-import warnings
-from astropy.wcs import FITSFixedWarning
-from astropy.nddata.utils import NoOverlapError
-warnings.simplefilter('ignore', FITSFixedWarning)
-warnings.simplefilter('ignore')
-import glob
-from .imaging import gen_rgb_image
-from .utils import get_lameff, get_lamrange#, gen_cutout
-from .eazy_helpers import get_obs_sed,get_tem_sed, get_pz, load_eazy_catalog
+# from astropy.io import fits
+# import astropy.units as u
+# from astropy.coordinates import SkyCoord
+# from astropy.wcs import WCS
+# from astropy.nddata.utils import Cutout2D
+# from astropy.stats import sigma_clipped_stats
+# from photutils.aperture import CircularAperture, aperture_photometry
+# from astropy.cosmology import Planck18 as cosmo
+# import os, sys, tqdm
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import matplotlib as mpl
+# from copy import copy, deepcopy
+# import warnings
+# from astropy.wcs import FITSFixedWarning
+# from astropy.nddata.utils import NoOverlapError
+# warnings.simplefilter('ignore', FITSFixedWarning)
+# warnings.simplefilter('ignore')
+# import glob
+# from .imaging import gen_rgb_image
+# from .utils import get_lameff, get_lamrange#, gen_cutout
+# from .eazy_helpers import get_obs_sed,get_tem_sed, get_pz, load_eazy_catalog
 
-config = {
-    'bands': {
-        'cosmos-web':['f814w','f115w','f150w','f277w','f444w','f770w'],
-        'primer-cosmos':['f606w','f814w','f090w','f115w','f150w','f200w','f277w','f356w','f410m','f444w','f770w','f1800w'],
-        'ceers':['f606w','f814w','f115w','f150w','f200w','f277w','f356w','f410m','f444w']
-    },
-    'filters': {
-        'cosmos-web':['hst_acs_f814w','jwst_nircam_f115w','jwst_nircam_f150w','jwst_nircam_f277w','jwst_nircam_f444w','jwst_miri_f770w'],
-        'primer-cosmos':['hst_acs_f606w','hst_acs_f814w','jwst_nircam_f090w','jwst_nircam_f115w','jwst_nircam_f150w','jwst_nircam_f200w','jwst_nircam_f277w','jwst_nircam_f356w','jwst_nircam_f410m','jwst_nircam_f444w','jwst_miri_f770w','jwst_miri_f1800w']
-    },
-    'colors': {
-        'cosmos-web':['darkmagenta','#0088e7', '#03a1a1', '#83b505','#ab0202','#e74001'],
-        'primer-cosmos':['indigo', 'darkmagenta','#0c00e7', '#0088e7', '#03a1a1', '#009a49', '#83b505', '#c2a206','darkorange','#ab0202','#e74001','#630606']
-    }
-}
-
-
-def get_filepath(field, band, ext, tile=None):
-    '''
-    general helper function to load a given JWST (or other) image
-    some fields are broken into tiles to save memory; for these, specify e.g. tile='A5'
-    `field` must be one of 'cosmos-web', 'primer-cosmos', 'ceers' (for now)
-    `band` must be in the above config
-    '''
-
-    ############################ some code to change the default path based on the hostname
-    import socket
-    hostname = socket.gethostname()
-    if hostname == 'cns-s-pmaa65432': # my desktop
-        simmons_prefix = '/V/simmons/'
-    else: # otherwise, on hard drive
-        simmons_prefix = '/V/simmons/'
-    ############################
-
-    ############################ for ground-based images
-    if field in ['cosmos-web','primer-cosmos']:
-        if band.startswith('IRAC'):
-            if ext == 'sci':
-                filepath, hdu_index = f"{simmons_prefix}/cosmos-web/mosaics_ground/irac.{band.split('IRAC')[-1]}.mosaic.Fconv_resamp015_zp-28.09_{tile}.fits", 0
-            elif ext == 'wht':
-                filepath, hdu_index = f"{simmons_prefix}/cosmos-web/mosaics_ground/irac.{band.split('IRAC')[-1]}.mosaic.Fconv_resamp015_weight_zp-28.09_{tile}.fits", 0
-            else:
-                raise Exception('we dont have ERR maps for IRAC! only SCI,WHT')
-
-        if band in ['NB118','Y','J','H','Ks']:
-            if ext == 'sci': 
-                filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/UVISTA_{band}_12_01_24_allpaw_skysub_015_dr6_rc_v1_zp-28.09_{tile}.fits', 0
-            elif ext == 'wht': 
-                filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/UVISTA_{band}_12_01_24_allpaw_skysub_015_dr6_rc_v1.weight_zp-28.09_{tile}.fits', 0
-            else:
-                raise Exception('we dont have ERR maps for UVISTA! only SCI, WHT')
-            
-        if band in ['g','r','i','z','y']:
-            if ext in ['sci','wht']:
-                if tile in ['A4', 'A5', 'A9', 'A10']:
-                    if band=='g': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-G-9813-pdr3_dud_rev-230413-130357_{ext}_zp-28.09_{tile}.fits', 0
-                    if band=='r': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-R-9813-pdr3_dud_rev-230413-130346_{ext}_zp-28.09_{tile}.fits', 0
-                    if band=='i': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-I-9813-pdr3_dud_rev-230413-130351_{ext}_zp-28.09_{tile}.fits', 0
-                    if band=='z': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-Z-9813-pdr3_dud_rev-230413-130355_{ext}_zp-28.09_{tile}.fits', 0
-                    if band=='y': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-Y-9813-pdr3_dud_rev-230413-130357_{ext}_zp-28.09_{tile}.fits', 0
-                elif tile in ['A1', 'A2', 'A3', 'A8', 'A7', 'A6']:
-                    if band=='g': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-G-9813-pdr3_dud_rev-230412-135737_{ext}_zp-28.09_{tile}.fits', 0
-                    if band=='r': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-R-9813-pdr3_dud_rev-230413-121613_{ext}_zp-28.09_{tile}.fits', 0
-                    if band=='i': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-I-9813-pdr3_dud_rev-230413-121625_{ext}_zp-28.09_{tile}.fits', 0
-                    if band=='z': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-Z-9813-pdr3_dud_rev-230413-121629_{ext}_zp-28.09_{tile}.fits', 0
-                    if band=='y': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/cutout-HSC-Y-9813-pdr3_dud_rev-230413-121631_{ext}_zp-28.09_{tile}.fits', 0
-                else:
-                    if band=='g': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/{tile}--cutout-HSC-G-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
-                    if band=='r': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/{tile}--cutout-HSC-R-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
-                    if band=='i': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/{tile}--cutout-HSC-I-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
-                    if band=='z': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/{tile}--cutout-HSC-Z-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
-                    if band=='y': filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics_ground/{tile}--cutout-HSC-Y-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
-            else:
-                raise Exception('we dont have ERR maps for HSC! only SCI,WHT')
-
-    # if len(suffix)>0:
-    #     typ += f'_{suffix}'
-
-    if field=='cosmos-web':
-        if band=='f814w':
-            if ext.startswith('sci'): ext = ext.replace('sci','drz')
-        if tile.startswith('B'):
-            if band=='f814w':
-                filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_cosmos_web_2024jan_30mas_tile_{tile}_hst_acs_wfc_f814w_{ext}.fits', 0
-            elif band=='f770w':
-                if tile in ['B1','B2','B3','B4','B5','B6','B7','B8','B9']:
-                    filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_30mas_{tile}_v0_7_{ext}.fits', 1
-                if tile in ['B10']:
-                    filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_30mas_{tile}_v0_6_{ext}.fits', 1
-            elif band in ['f115w','f150w','f277w','f444w']:
-                filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_nircam_{band}_COSMOS-Web_30mas_{tile}_v0_8_{ext}.fits', 0
-                # if 'psfMatched' in ext: hdu_index=0
-        elif tile.startswith('A'):
-            if band=='f814w':
-                filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_cosmos_web_2023apr_30mas_tile_{tile}_hst_acs_wfc_f814w_{ext}.fits', 0
-            elif band=='f770w':
-                if tile in ['A1']:
-                    filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_30mas_{tile}_v0_7_{ext}.fits', 1           
-                if tile in ['A2','A3','A4','A5','A6','A8']:
-                    filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_30mas_{tile}_v0_6_{ext}.fits', 1           
-                if tile in ['A7','A9','A10']:
-                    filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_30mas_{tile}_v0_3_{ext}.fits', 0           
-            elif band in ['f115w','f150w','f277w','f444w']:
-                filepath, hdu_index = f'{simmons_prefix}/cosmos-web/mosaics/mosaic_nircam_{band}_COSMOS-Web_30mas_{tile}_v0_8_{ext}.fits', 0
-                # if 'psfMatched' in ext: hdu_index=0
-
-        else:
-            print(f'tile "{tile}" not understood')
-            return
-                
-    
-    elif field=='primer-cosmos':
-        if band in ['f606w','f814w']:
-            if ext.startswith('sci'): ext = ext.replace('sci','drz')
-            filepath, hdu_index = f'{simmons_prefix}/primer/mosaics/mosaic_cosmos_primer_30mas_acs_wfc_{band}_{ext}.fits', 0
-        elif band in ['f125w','f160w']:
-            if ext.startswith('sci'): ext = ext.replace('sci','drz')
-            filepath, hdu_index = f'{simmons_prefix}/primer/mosaics/mosaic_cosmos_primer_30mas_wfc3_ir_{band}_{ext}.fits', 1
-        elif band in ['f770w','f1800w']:
-            filepath, hdu_index = f'{simmons_prefix}/primer/mosaics/mosaic_miri_{band}_PRIMER-COSMOS_30mas_{ext}.fits', 0
-        elif band in ['f090w','f115w','f150w','f200w','f277w','f356w','f410m','f444w']:
-            filepath, hdu_index = f'{simmons_prefix}/primer/mosaics/mosaic_nircam_{band}_PRIMER-COSMOS_30mas_{ext}.fits', 0
-
-    elif field=='ceers':
-        if band in ['f606w','f814w','f105w','f125w','f140w','f160w']:
-            if ext=='wht': raise Exception("WHT map don't exist for CEERS HST")
-            if ext=='sci_pfMatched': raise Exception("I don't yet have PSF matched mosaics for CEERS")
-            
-            if band in ['f606w','f814w']:
-                if ext=='sci': filepath, hdu_index = f'{simmons_prefix}/ceers/mosaics/{tile}/egs_all_acs_wfc_{band}_030mas_v1.9_{tile}_mbkgsub1.fits', 0
-                if ext=='err': filepath, hdu_index = f'{simmons_prefix}/ceers/mosaics/{tile}/egs_all_acs_wfc_{band}_030mas_v1.9_{tile}_rms.fits', 0
-            elif band in ['f105w','f125w','f140w','f160w']:
-                if ext=='sci': filepath, hdu_index = f'{simmons_prefix}/ceers/mosaics/{tile}/egs_all_wfc3_ir_{band}_030mas_v1.9_{tile}_mbkgsub1.fits', 0
-                if ext=='err': filepath, hdu_index = f'{simmons_prefix}/ceers/mosaics/{tile}/egs_all_wfc3_ir_{band}_030mas_v1.9.1_{tile}_rms.fits', 0
-        elif band in ['f115w','f150w','f200w','f277w','f356w','f410m','f444w']:
-            if ext=='sci': hdu_index=1
-            if ext=='err': hdu_index=3
-            if ext=='wht': hdu_index=5
-            if ext=='sci_psfMatched': raise Exception("I don't yet have PSF matched mosaics for CEERS")            
-            filepath = f'{simmons_prefix}/ceers/mosaics/{tile}/ceers_{tile}_{band}_v1_mbkgsub1.fits'
-        elif band in ['f560w','f770w']:
-            if ext=='sci': hdu_index=1
-            if ext=='err': hdu_index=2
-            if ext=='wht': hdu_index=4
-            if ext=='sci_pfMatched': raise Exception("I don't yet have PSF matched mosaics for CEERS")            
-            filepath = f'{simmons_prefix}/ceers/mosaics/{tile}/ceers_{tile}_{band}_i2d.fits'
-
-
-    else:
-        print(f'field "{field}" not understood')
-        return
-    return filepath, hdu_index
-    
-            
-
-
-def load_image(field, band, ext, tile=None, convert_units=False):
-    '''
-        'tile' == 'A1'--'A10' or 'B1'--'B10' or 'primer-cosmos'
-        'band' == one of 'f814w', 'f115w', 'f150w', 'f277w', 'f444w', 'f770w'
-        'typ' == one of 'sci', 'err', 'wht'
-    '''
-    filepath, hdu_index = get_filepath(field, band, ext, tile=tile)  
-    f = fits.open(filepath)
-    # f = fits.open(filepath)
-    # if np.ndim(f[0].data)==0:
-    #     data, header = f[1].data, f[1].header
-    #     if 'NSCI_MU' in f[0].header:
-    #         f[1].header['NSCI_MU'] = f[0].header['NSCI_MU']
-    #     if 'NSCI_SIG' in f[0].header:
-    #         f[1].header['NSCI_SIG'] = f[0].header['NSCI_SIG']
-    # else:
-        # data, header = f[0].data, f[0].header
-    data, header = f[hdu_index].data, f[hdu_index].header
-    del f
-
-
-    if convert_units:
-        if 'sci' in ext or 'err' in ext:
-            if band=='f814w':
-                photflam, photplam = 6.99715969242424E-20, 8047.468423484849
-                conversion = 3.33564e10 * (photplam)**2 * photflam
-            elif band=='f606w':
-                photflam, photplam = 7.86211131043771E-20, 5921.891224579125
-                conversion = 3.33564e10 * (photplam)**2 * photflam
-            elif band=='f125w':
-                photflam, photplam = 2.2446000E-20, 1.2486060E+04
-                conversion = 3.33564e10 * (photplam)**2 * photflam
-            elif band=='f160w':
-                photflam, photplam = 1.9429001E-20,  15369.176
-                conversion = 3.33564e10 * (photplam)**2 * photflam
-            else:
-                conversion = 1e12 * np.pi**2/(180**2) * (1/(3600**2)) * 0.03**2
-            data *= conversion
-        else:
-            print('not converting units for some reason')
-
-    return data, header
-
-def load_hdr(field, band, tile=None, suffix=None):
-    if suffix:
-        return load_image(field, band, f'sci_{suffix}', tile)[1]
-    else:
-        return load_image(field, band, 'sci', tile)[1]
-def load_sci(field, band, tile=None, convert_units=False, suffix=None):
-    if suffix:
-        return load_image(field, band, f'sci_{suffix}', tile, convert_units=convert_units)[0]
-    else:
-        return load_image(field, band, 'sci', tile, convert_units=convert_units)[0]
-def load_wcs(field, band, tile=None):
-    return WCS(load_hdr(field, band, tile))
-def load_err(field, band, tile=None, convert_units=False):
-    return load_image(field, band, 'err', tile, convert_units=convert_units)[0]
-def load_wht(field, band, tile=None):
-    return load_image(field, band, 'wht', tile)[0]
-# def load_vrp(field, band, tile=tile, suffix=''):
-#     return load_image(field, tile, band, 'vrp', suffix=suffix)[0]
-# def load_exp(field, band, tile=tile, suffix=''):
-#     d, h = load_image(field, tile, band, 'exp', suffix=suffix)
-#     return d, WCS(h)
 
 def gen_cutout(field, band, coord, width, suffix='', tile=None, err_method='simple', verbose=False):
     '''
