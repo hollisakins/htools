@@ -110,6 +110,7 @@ def main(IDs,
         
         sci_dict, hdr_dict, wht_dict = {}, {}, {}
         for band in ['f814w','f115w','f150w','f277w','f444w','f770w','g','r','i','z','y','Y','J','H','Ks','IRAC1','IRAC3','IRAC4']:
+            print(f'Reading in band {band}')
             sci_dict[band] = io.load_sci('cosmos-web', band, tile=tile) 
             hdr_dict[band] = io.load_hdr('cosmos-web', band, tile=tile) 
             wht_dict[band] = io.load_wht('cosmos-web', band, tile=tile) 
@@ -128,8 +129,7 @@ def main(IDs,
             'f770w': '#e74001'
         }
 
-        for i in (pbar := tqdm.tqdm(range(len(IDs[tile])))):
-            pbar.set_description(tile)
+        for i in tqdm.tqdm(range(len(IDs[tile]))):
             ID = IDs[tile][i]
 
             ######################################################################################################################################
@@ -574,7 +574,7 @@ if __name__ == '__main__':
         logo = '/n23data2/hakins/exchg/COSMOS-Web/cwlogo_black.png'
         catalog_path = '/n17data/shuntov/COSMOS-Web/Catalogs/'
         outdir = '/n23data2/hakins/exchg/COSMOS-Web/inspec_plots/'
-        lephare_spec_path = '/home/ilbert/n07data/COSMOS-Web/photoz_MASTER_v3.1.0/PHOTOZ_BC03/SPEC_v3.1.0'
+        lephare_spec_path = '/home/ilbert/n07data/COSMOS-Web/photoz_MASTER_v3.1.0/PHOTOZ_BC03/SPEC_v3.1.0/'
             
 
     # figure out which tile each ID is in
