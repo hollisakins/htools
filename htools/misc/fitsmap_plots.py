@@ -80,7 +80,6 @@ err_table = {
 
 
 def main(IDs, 
-         tiles,
          logo = None,
          catalog_path = None,
          catalog_filename = None,
@@ -97,6 +96,8 @@ def main(IDs,
          verbose=False,
     ):
 
+    tiles = list(IDs.keys())
+    
     catalog = fits.getdata(os.path.join(catalog_path, catalog_filename))
 
     log('Loading full RGB image...')
@@ -104,6 +105,7 @@ def main(IDs,
     with open(rgb_path, 'rb') as f:
         rgb_full = pickle.load(f)
     log('Done')
+
 
     for tile in tiles:
         log(f'Processing tile {tile}...')
@@ -587,11 +589,17 @@ if __name__ == '__main__':
         # split IDs_all array into dict of arrays, one for each tile
         IDs = {}
         for tile in np.unique(tiles_all):
-            log(tile)
             IDs[tile] = IDs_all[tiles_all==tile]
-        tiles = np.unique(tiles_all)
+
+    elif which_ids.startswith('A') or which_ids.startswith('B'):
+        tile = which_ids
+        log(f'Starting plot generation for all IDs in tile {tile}...')
+        f = fits.getdata(os.path.join(catalog_path, catalog_filename))
+        IDs_all = np.array(f[f['TILE']==tile]['ID_SE++'], dtype=int)
+        IDs = {tile: IDs_all}
 
     else:
+        raise Exception('Invalid input for which_ids')
         IDs_all = np.array(which_ids.split(','), dtype=int)
         tiles_all = []
         for ID in IDs_all:
@@ -599,10 +607,7 @@ if __name__ == '__main__':
             tiles_all.append(fi['TILE'][0])
         tiles_all = np.array(tiles_all)
     
-    quit()
-    
     main(IDs, 
-         tiles,
          logo=logo, 
          catalog_path=catalog_path, 
          catalog_filename=catalog_filename, 
