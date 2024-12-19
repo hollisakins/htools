@@ -7,5 +7,5 @@ setup(
     description='Research Tools for Hollis Akins',
     author='Hollis Akins',
     license='MIT',
-    install_requires=['astropy','numpy','matplotlib','scipy','tqdm','pandas','rich','dotmap'],
+    install_requires=['astropy','numpy','matplotlib','scipy','tqdm','pandas','rich','dotmap','toml'],
 )

@@ -564,20 +564,6 @@ if __name__ == '__main__':
     catalog_filename = 'COSMOSWeb_master_v3.1.0_assoc_cold+hot_sersic_cgs_err-calib.fits'
     catalog_shortname = 'v3.1.0'
 
-    # figure out which tile each ID is in
-    f = fits.getdata('/data/COSMOS-Web/catalogs/COSMOSWeb_master_v3.1.0_assoc_cold+hot_sersic_cgs_err-calib.fits')
-    tiles_all = []
-    for ID in IDs_all:
-        fi = f[f['ID_SE++']==ID]
-        tiles_all.append(fi['TILE'][0])
-    tiles_all = np.array(tiles_all)
-
-    # split IDs_all array into dict of arrays, one for each tile
-    IDs = {}
-    for tile in np.unique(tiles_all):
-        IDs[tile] = IDs_all[tiles_all==tile]
-    tiles = np.unique(tiles_all)
-
     if host.hostname == 'patrick':
         logo = '/Users/hba423/Library/CloudStorage/Dropbox/presentations/assets/cosmos_web_logos/cosmosweb_black_horz_transparent.png'
         catalog_path = '/data/COSMOS-Web/catalogs/'
@@ -590,6 +576,20 @@ if __name__ == '__main__':
         outdir = '/n23data2/hakins/exchg/COSMOS-Web/inspec_plots/'
         lephare_spec_path = '/home/ilbert/n07data/COSMOS-Web/photoz_MASTER_v3.1.0/PHOTOZ_BC03/SPEC_v3.1.0'
             
+
+    # figure out which tile each ID is in
+    f = fits.getdata(os.path.join(catalog_path, catalog_filename))
+    tiles_all = []
+    for ID in IDs_all:
+        fi = f[f['ID_SE++']==ID]
+        tiles_all.append(fi['TILE'][0])
+    tiles_all = np.array(tiles_all)
+
+    # split IDs_all array into dict of arrays, one for each tile
+    IDs = {}
+    for tile in np.unique(tiles_all):
+        IDs[tile] = IDs_all[tiles_all==tile]
+    tiles = np.unique(tiles_all)
 
     
     main(IDs, 
