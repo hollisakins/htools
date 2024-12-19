@@ -110,7 +110,7 @@ def main(IDs,
         
         sci_dict, hdr_dict, wht_dict = {}, {}, {}
         for band in ['f814w','f115w','f150w','f277w','f444w','f770w','g','r','i','z','y','Y','J','H','Ks','IRAC1','IRAC3','IRAC4']:
-            print(f'Reading in band {band}')
+            log(f'Reading in band {band}')
             sci_dict[band] = io.load_sci('cosmos-web', band, tile=tile) 
             hdr_dict[band] = io.load_hdr('cosmos-web', band, tile=tile) 
             wht_dict[band] = io.load_wht('cosmos-web', band, tile=tile) 
@@ -421,15 +421,15 @@ def main(IDs,
                     s = f/f_err
                     if s > 1.5:
                         ax.errorbar(w, f, yerr=f_err, xerr=[[w-w1],[w2-w]], linewidth=0, marker='o', ms=6, 
-                                    mfc=c, mec=c, elinewidth=1, ecolor=c, capthick=1, capsize=2, zorder=z)
+                                    mfc=c, mec=c, elinewidth=1.5, ecolor=c, mew=1.5, capthick=1.5, capsize=3, zorder=z)
                         if annotate: ax.annotate(fr'${s:.1f}\sigma$', (w, 1.15*(f+f_err)), ha='center', va='bottom', color=c, fontsize=6, bbox=dict(facecolor='w', edgecolor='none', pad=0.01, alpha=0.7), zorder=z)
                     else:
                         ax.errorbar(w, 2*f_err, yerr=0.5*f_err, xerr=[[w-w1],[w2-w]], uplims=True, linewidth=0,
-                                    mfc='none', mec=c, elinewidth=1, ecolor=c, capthick=1, capsize=2, zorder=z)
+                                    mfc='none', mec=c, elinewidth=1.5, ecolor=c, mew=1.5, capthick=1.5, capsize=3, zorder=z)
                         if annotate: ax.annotate(fr'${s:.1f}\sigma$', (w, 1.15*2*f_err), ha='center', va='bottom', color=c, fontsize=6, bbox=dict(facecolor='w', edgecolor='none', pad=0.01, alpha=0.7), zorder=z)
                 if label is not None:
                     ax.errorbar(100, 1, yerr=1, xerr=1, linewidth=0, marker='s', ms=6, 
-                                mfc='none', mec=c, elinewidth=1, ecolor=c, capthick=1, capsize=2, zorder=zorder, label=label)
+                                mfc='none', mec=c, elinewidth=1, ecolor=c, mew=1.5, capthick=1.5, capsize=3, zorder=zorder, label=label)
 
 
             if verbose: log('\t Plotting photometry...')
@@ -450,7 +450,7 @@ def main(IDs,
             labels = ['F814W','F115W','F150W','F277W','F444W','F770W','$u$','$g$','$r$','$i$','$z$','$y$','$Y$','$J$','$H$',r'$K_s$', '[3.6]', '[5.8]', '[8.0]']
             yoff = [1.05,1.05,1.05,1.05,1.05,1.05,1,1,1,1,1,1,1,1,1,1,1,1.05,0.9]
             xoff = [1.01,1,1,1,1,1,1,1,1,0.95,1.03,1,1,1.03,1.03,1,1,1,1.2]
-            zorders = 100-np.arange(len(cs))
+            zorders = 1000-np.arange(len(cs))
 
             maxflux = 0
             
@@ -481,7 +481,7 @@ def main(IDs,
                 phot = lph.phot.get_filters(filters.names[:-3])
                 w = wav[:-3]
                 for i in range(len(phot)):
-                    ax_sed.errorbar(w[i], phot.model[i], marker='o', mew=2, mec=lph_color, mfc='none', ms=10, zorder=999)
+                    ax_sed.errorbar(w[i], phot.model[i], marker='o', mew=2, mec=lph_color, mfc='none', ms=10, zorder=100)
 
                 ax_sed.plot(lph.models['GAL-1']['wav_obs']/1e4, lph.models['GAL-1']['fnu'], color=lph_color, alpha=0.4, zorder=-999, linewidth=0.5)
 
@@ -558,9 +558,6 @@ def main(IDs,
 
 
 if __name__ == '__main__':
-
-
-    IDs_all = np.array([27244])
     catalog_filename = 'COSMOSWeb_master_v3.1.0_assoc_cold+hot_sersic_cgs_err-calib.fits'
     catalog_shortname = 'v3.1.0'
 
@@ -579,6 +576,9 @@ if __name__ == '__main__':
 
     # figure out which tile each ID is in
     f = fits.getdata(os.path.join(catalog_path, catalog_filename))
+    # IDs_all = np.array([27244])
+    IDs_all = np.array(f['ID_SE++'], dtype=int)
+
     tiles_all = []
     for ID in IDs_all:
         fi = f[f['ID_SE++']==ID]
@@ -599,7 +599,7 @@ if __name__ == '__main__':
          catalog_filename=catalog_filename, 
          catalog_shortname=catalog_shortname, 
          outdir=outdir, 
-         out_format='png', dpi=600, 
+         out_format='png', dpi=400, 
          overwrite=True, 
          display_width=4*u.arcsec, 
          cutout_width=6*u.arcsec, 
