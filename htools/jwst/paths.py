@@ -11,6 +11,12 @@ def get_cosmos_web_rgb_filepath():
     elif host.hostname == 'candide':
         return '/n23data2/hakins/COSMOS-Web/RGB_60mas_tot_edited_gimp_compressed.pickle'
 
+def get_cosmos_web_full_f444w_filepath():
+    if host.hostname == 'patrick':
+        return '/Users/hba423/fitsmap/data3/CW_f444w_60mas_tot_v8.fits'
+    elif host.hostname == 'candide':
+        return '/n23data2/hakins/exchg/segmap_60mas_tot.fits'
+
 def get_cosmos_web_detec_filepath(tile):
     if host.hostname == 'patrick':
         filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics/detection_chi2pos_SWLW_{tile}.fits', 0

@@ -393,7 +393,7 @@ def main(IDs,
 
 
             if verbose: log('\t Making RGB cutout...')
-            wcs = WCS(fits.getheader('/Users/hba423/fitsmap/data3/CW_f444w_60mas_tot_v8.fits'))
+            wcs = WCS(fits.getheader(paths.get_cosmos_web_full_f444w_filepath()))
             b = Cutout2D(np.flip(rgb_full[:,:,0],axis=0), coord, size=cutout_width*3/2, wcs=wcs)
             g = Cutout2D(np.flip(rgb_full[:,:,1],axis=0), coord, size=cutout_width*3/2, wcs=wcs)
             r = Cutout2D(np.flip(rgb_full[:,:,2],axis=0), coord, size=cutout_width*3/2, wcs=wcs)
