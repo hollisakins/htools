@@ -574,23 +574,32 @@ if __name__ == '__main__':
         lephare_spec_path = '/home/ilbert/n07data/COSMOS-Web/photoz_MASTER_v3.1.0/PHOTOZ_BC03/SPEC_v3.1.0/'
             
 
-    # figure out which tile each ID is in
-    f = fits.getdata(os.path.join(catalog_path, catalog_filename))
-    # IDs_all = np.array([27244])
-    IDs_all = np.array(f['ID_SE++'], dtype=int)
+    which_ids = sys.argv[1]
+    if which_ids == 'all':
+        log('Starting plot generation for all IDs in catalog...')
+        
+        # figure out which tile each ID is in
+        f = fits.getdata(os.path.join(catalog_path, catalog_filename))
 
-    tiles_all = []
-    for ID in IDs_all:
-        fi = f[f['ID_SE++']==ID]
-        tiles_all.append(fi['TILE'][0])
-    tiles_all = np.array(tiles_all)
+        IDs_all = np.array(f['ID_SE++'], dtype=int)
+        tiles_all = np.array(f['TILE'], dtype=str)
 
-    # split IDs_all array into dict of arrays, one for each tile
-    IDs = {}
-    for tile in np.unique(tiles_all):
-        IDs[tile] = IDs_all[tiles_all==tile]
-    tiles = np.unique(tiles_all)
+        # split IDs_all array into dict of arrays, one for each tile
+        IDs = {}
+        for tile in np.unique(tiles_all):
+            log(tile)
+            IDs[tile] = IDs_all[tiles_all==tile]
+        tiles = np.unique(tiles_all)
 
+    else:
+        IDs_all = np.array(which_ids.split(','), dtype=int)
+        tiles_all = []
+        for ID in IDs_all:
+            fi = f[f['ID_SE++']==ID]
+            tiles_all.append(fi['TILE'][0])
+        tiles_all = np.array(tiles_all)
+    
+    quit()
     
     main(IDs, 
          tiles,
