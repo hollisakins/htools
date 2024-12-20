@@ -65,7 +65,7 @@ def get_cosmos_web_filepath(band, ext, tile, ps='30mas'):
     if band not in config.bands['cosmos-web']:
         raise ValueError(f"{band} not available for COSMOS-Web")
     
-    if ext not in ['sci','wht','err']:
+    if ext not in ['sci','wht','err','mod']:
         raise ValueError(f"{ext} not understood")
     
     if ps not in ['30mas','60mas']:
@@ -88,6 +88,7 @@ def get_cosmos_web_filepath(band, ext, tile, ps='30mas'):
                     filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_{ps}_{tile}_v0_6_{ext}.fits', 1
             elif band in ['f115w','f150w','f277w','f444w']:
                 filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics/mosaic_nircam_{band}_COSMOS-Web_{ps}_{tile}_v0_8_{ext}.fits', 0
+
         elif tile.startswith('A'):
             if band=='f814w':
                 filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics/mosaic_cosmos_web_2023apr_{ps}_tile_{tile}_hst_acs_wfc_f814w_{ext}.fits', 0
@@ -100,6 +101,9 @@ def get_cosmos_web_filepath(band, ext, tile, ps='30mas'):
                     filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics/mosaic_miri_f770w_COSMOS-Web_{ps}_{tile}_v0_3_{ext}.fits', 0           
             elif band in ['f115w','f150w','f277w','f444w']:
                 filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics/mosaic_nircam_{band}_COSMOS-Web_{ps}_{tile}_v0_8_{ext}.fits', 0
+        
+        if ext == 'mod':
+            filepath, hdu_index = f'/V/simmons/cosmos-web/mosaics_model/v3.1.0/CheckImg_COSMOSWeb__model_mosaic_nircam_{band}_COSMOS-Web_60mas_{tile}_v0_8_sci_1.fits', 0
 
     elif host.hostname == 'candide':
         if tile.startswith('B'):
@@ -124,6 +128,9 @@ def get_cosmos_web_filepath(band, ext, tile, ps='30mas'):
                     filepath, hdu_index = f'/n23data2/hakins/COSMOS-Web/mosaics/mosaic_miri_f770w_COSMOS-Web_{ps}_{tile}_v0_3_{ext}.fits', 0           
             elif band in ['f115w','f150w','f277w','f444w']:
                 filepath, hdu_index = f'/n23data2/hakins/COSMOS-Web/mosaics/mosaic_nircam_{band}_COSMOS-Web_{ps}_{tile}_v0_8_{ext}.fits', 0
+        
+        if ext == 'mod':
+            filepath, hdu_index = f'/n17data/shuntov/COSMOS-Web/CheckImages/JAN24-{tile}_v3.1.0-ASC/CheckImg_COSMOSWeb__model_mosaic_nircam_{band}_COSMOS-Web_60mas_{tile}_v0_8_sci_1.fits', 0
     
     return filepath, hdu_index
 
@@ -256,7 +263,7 @@ def get_cosmos_filepath(band, ext, tile=None):
                 # load full area IRAC mosaics
                 raise NotImplementedError("IRAC mosaics for the full COSMOS area not implemented ")
 
-        if band in ['NB118','Y','J','H','Ks']:
+        elif band in ['NB118','Y','J','H','Ks']:
             if tile is not None:
                 if ext == 'sci': 
                     filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/UVISTA_{band}_12_01_24_allpaw_skysub_015_dr6_rc_v1_zp-28.09_{tile}.fits', 0
@@ -266,7 +273,7 @@ def get_cosmos_filepath(band, ext, tile=None):
                 # load full area UVISTA mosaics
                 raise NotImplementedError("UVISTA mosaics for the full COSMOS area not implemented ")
             
-        if band in ['g','r','i','z','y']:
+        elif band in ['g','r','i','z','y']:
             if tile is not None:
                 if tile in ['A4', 'A5', 'A9', 'A10']:
                     if band=='g': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-HSC-G-9813-pdr3_dud_rev-230413-130357_{ext}_zp-28.09_{tile}.fits', 0
@@ -280,14 +287,67 @@ def get_cosmos_filepath(band, ext, tile=None):
                     if band=='i': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-HSC-I-9813-pdr3_dud_rev-230413-121625_{ext}_zp-28.09_{tile}.fits', 0
                     if band=='z': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-HSC-Z-9813-pdr3_dud_rev-230413-121629_{ext}_zp-28.09_{tile}.fits', 0
                     if band=='y': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-HSC-Y-9813-pdr3_dud_rev-230413-121631_{ext}_zp-28.09_{tile}.fits', 0
+                    else: raise ValueError(f"{band} not understood")
                 else:
-                    if band=='g': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/{tile}--cutout-HSC-G-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
-                    if band=='r': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/{tile}--cutout-HSC-R-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
-                    if band=='i': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/{tile}--cutout-HSC-I-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
-                    if band=='z': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/{tile}--cutout-HSC-Z-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
-                    if band=='y': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/{tile}--cutout-HSC-Y-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='g': filepath, hdu_index = f'/n23data2/hakins/exchg/hscdata/{tile}--cutout-HSC-G-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='r': filepath, hdu_index = f'/n23data2/hakins/exchg/hscdata/{tile}--cutout-HSC-R-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='i': filepath, hdu_index = f'/n23data2/hakins/exchg/hscdata/{tile}--cutout-HSC-I-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='z': filepath, hdu_index = f'/n23data2/hakins/exchg/hscdata/{tile}--cutout-HSC-Z-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    if band=='y': filepath, hdu_index = f'/n23data2/hakins/exchg/hscdata/{tile}--cutout-HSC-Y-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                    else: raise ValueError(f"{band} not understood")
             else:
                 raise NotImplementedError("HSC mosaics for the full COSMOS area not implemented ")
                 # load full area HSC mosaics
+
+        elif band in ['NB0816', 'NB0921', 'NB1010']:
+            if tile in ['A4', 'A5', 'A9', 'A10']:
+                if band == 'NB0816': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-NB0816-9813-pdr3_dud_rev-230413-130357_{ext}_zp-28.09_{tile}.fits', 0
+                elif band == 'NB0921': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-NB0921-9813-pdr3_dud_rev-230413-130357_{ext}_zp-28.09_{tile}.fits', 0
+                elif band == 'NB1010': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-NB1010-9813-pdr3_dud_rev-230413-130357_{ext}_zp-28.09_{tile}.fits', 0
+                else: raise ValueError(f"{band} not understood")
+            elif tile in ['A1', 'A2', 'A3', 'A8', 'A7', 'A6']:
+                if band == 'NB0816': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-NB0816-9813-pdr3_dud_rev-230413-121622_{ext}_zp-28.09_{tile}.fits', 0
+                elif band == 'NB0921': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-NB0921-9813-pdr3_dud_rev-230413-121626_{ext}_zp-28.09_{tile}.fits', 0
+                elif band == 'NB1010': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/cutout-NB1010-9813-pdr3_dud_rev-230413-121845_{ext}_zp-28.09_{tile}.fits', 0
+                else: raise ValueError(f"{band} not understood")
+            else:
+                if band == 'NB0816': filepath, hdu_index = f'/n23data2/hakins/exchg/hscdata/{tile}--cutout-NB0816-9813-pdr3_dud_rev_{ext}_zp-28.09.fits', 0
+                elif band == 'NB0921': filepath, hdu_index = f'/n23data2/hakins/exchg/hscdata/{tile}--cutout-NB0921-9813-pdr3_dud_rev_{ext}_zp-28.09.fits.fits', 0
+                elif band == 'NB1010': filepath, hdu_index = f'/n23data2/hakins/exchg/hscdata/{tile}--cutout-NB1010-9813-pdr3_dud_rev_{ext}_zp-28.09.fits.fits', 0
+                else: raise ValueError(f"{band} not understood")
+                
+        else:
+            if ext == 'sci':
+                if band == 'IB427': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L427_20-09-29a_cosmos_zp-28.09_{tile}.fits'
+                elif band == 'IB464': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L464_20-09-29a_cosmos_zp-28.09_{tile}.fits'
+                elif band == 'IA484': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L484_20-09-29a_cosmos_zp-28.09_{tile}.fits'
+                elif band == 'IB505': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L505_20-09-29a_cosmos_zp-28.09_{tile}.fits'
+                elif band == 'IA527': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L527_20-09-29a_cosmos_zp-28.09_{tile}.fits'
+                elif band == 'IB574': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L574_20-09-29a_cosmos_zp-28.09_{tile}.fits'
+                elif band == 'IA624': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L624_20-09-29a_cosmos_zp-28.09_{tile}.fits'
+                elif band == 'IA679': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L679_20-09-29a_cosmos_zp-28.09_{tile}.fits'
+                elif band == 'IB709': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L709_20-09-29a_cosmos_zp-28.09_{tile}.fits'
+                elif band == 'NB711': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L711_20-09-29a_cosmos_zp-28.09_{tile}.fits'
+                elif band == 'IA738': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L738_20-09-29a_cosmos_zp-28.09_{tile}.fits'
+                elif band == 'IA767': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L767_20-09-29a_cosmos_zp-28.09_{tile}.fits'
+                elif band == 'NB816': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L816_20-09-29a_cosmos_zp-28.09_{tile}.fits'
+                elif band == 'IB827': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L827_20-09-29a_cosmos_zp-28.09_{tile}.fits'
+                else: raise ValueError(f"{band} not understood")
+            else:
+                if band == 'IB427': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L427_20-09-29a_cosmos.weight_zp-28.09_{tile}.fits'
+                elif band == 'IB464': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L464_20-09-29a_cosmos.weight_zp-28.09_{tile}.fits'
+                elif band == 'IA484': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L484_20-09-29a_cosmos.weight_zp-28.09_{tile}.fits'
+                elif band == 'IB505': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L505_20-09-29a_cosmos.weight_zp-28.09_{tile}.fits'
+                elif band == 'IA527': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L527_20-09-29a_cosmos.weight_zp-28.09_{tile}.fits'
+                elif band == 'IB574': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L574_20-09-29a_cosmos.weight_zp-28.09_{tile}.fits'
+                elif band == 'IA624': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L624_20-09-29a_cosmos.weight_zp-28.09_{tile}.fits'
+                elif band == 'IA679': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L679_20-09-29a_cosmos.weight_zp-28.09_{tile}.fits'
+                elif band == 'IB709': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L709_20-09-29a_cosmos.weight_zp-28.09_{tile}.fits'
+                elif band == 'NB711': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L711_20-09-29a_cosmos.weight_zp-28.09_{tile}.fits'
+                elif band == 'IA738': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L738_20-09-29a_cosmos.weight_zp-28.09_{tile}.fits'
+                elif band == 'IA767': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L767_20-09-29a_cosmos.weight_zp-28.09_{tile}.fits'
+                elif band == 'NB816': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L816_20-09-29a_cosmos.weight_zp-28.09_{tile}.fits'
+                elif band == 'IB827': filepath, hdu_index = f'/n23data2/hakins/exchg/grounddata/SPC_L827_20-09-29a_cosmos.weight_zp-28.09_{tile}.fits'
+                else: raise ValueError(f"{band} not understood")
 
     return filepath, hdu_index

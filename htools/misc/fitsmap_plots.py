@@ -81,16 +81,20 @@ err_table = {
 filters = Filters(['f814w','f115w','f150w','f277w','f444w','f770w',
                     'cfht_u', 'hsc_g', 'hsc_r', 'hsc_i', 'hsc_z', 'hsc_y', 
                     'uvista_Y', 'uvista_J', 'uvista_H', 'uvista_Ks',
+                    'IB427','IB484','IB505','IB527','IB574','IB624',
+                    'IB679','IB709','IB738','IB767','IB827','NB711',
+                    'NB816','HSC-NB816','HSC-NB921','HSC-NB1010','NB118',
                     'irac_ch1', 'irac_ch3', 'irac_ch4'])
 wav, wav_min, wav_max = filters.wav.to(u.micron).value, filters.wav_min.to(u.micron).value, filters.wav_max.to(u.micron).value
 # hues = np.interp(wav, [0.3, 4], [0.8, 0.05], left=0.8, right=0.05)
 hues = np.interp(np.log10(wav), [-0.5, 0.6], [0.8, 0.05], left=0.8, right=0.05)
-saturation = 1
-value = 0.6
+saturations = [1]*16 + [0.3]*20
+values = [0.6]*16 + [0.9]*20
 colors = []
-for hue in hues:
-    colors.append(mpl.colors.hsv_to_rgb([hue, saturation, value]))
-short_names = ['f814w','f115w','f150w','f277w','f444w','f770w','u','g','r','i','z','y','Y','J','H','Ks','IRAC1','IRAC3','IRAC4']
+for i in range(len(hues)):
+    colors.append(mpl.colors.hsv_to_rgb([hues[i], saturations[i], values[i]]))
+short_names = ['f814w','f115w','f150w','f277w','f444w','f770w','u','g','r','i','z','y','Y','J','H','Ks','IB427','IB484','IB505','IB527','IB574','IB624',
+                    'IB679','IB709','IB738','IB767','IB827','NB711','NB816','HSC-NB816','HSC-NB921','HSC-NB1010','NB118','IRAC1','IRAC3','IRAC4']
 colors_dict = dict(zip(short_names, colors))
 
 def main(IDs, 
@@ -104,7 +108,7 @@ def main(IDs,
          overwrite=True,
          display_width = 4*u.arcsec,
          cutout_width = 6*u.arcsec,
-         vmax_in = 10,
+         vmax_min = 10,
          cmap = 'Greys',
          lephare_spec_path=None,
          verbose=False,
@@ -133,6 +137,8 @@ def main(IDs,
             # sci_filepath, hdu_index = get_filepath('cosmos-web', band, 'sci', tile=tile) # fits.open(sci_filepath)[hdu_index]
             # wht_filepath, hdu_index = get_filepath('cosmos-web', band, 'wht', tile=tile) #fits.open(wht_filepath)[hdu_index]
 
+        model_path, hdu_index = paths.get_filepath('cosmos-web', 'f277w', 'mod', tile=tile, ps='60mas')
+        model = fits.open(model_path)[hdu_index]
         detec = io.load_cosmos_web_detec(tile)
         segm = io.load_cosmos_web_segm(tile, catalog_version='v1.3')
 
@@ -144,6 +150,16 @@ def main(IDs,
             ra = cat['RA_MODEL'][0]
             dec = cat['DEC_MODEL'][0]
             coord = SkyCoord(ra=ra, dec=dec, unit=u.deg)
+            rad = np.sqrt(cat['AREA'][0]) * 0.03
+            if rad*2 > display_width.to(u.arcsec).value:
+                sf = (rad*2.5) / display_width.to(u.arcsec).value
+                display_width *= sf
+                cutout_width *= sf
+            
+            Reff = cat['RADIUS'][0] * 3600
+            Reff_err = cat['RADIUS_err'][0] * 3600
+            n_sersic = cat['SERSIC'][0]
+            n_sersic_err = cat['SERSIC_err'][0]
 
             outfilename = f"cosmos-web_sed_{catalog_shortname.replace('-','_')}_{ID}"
             outpath = os.path.join(outdir, outfilename)
@@ -158,51 +174,52 @@ def main(IDs,
 
 
             ######################################################################################################################################
-            fig = plt.figure(figsize=(12, 8.2), constrained_layout=False)
-            gs = mpl.gridspec.GridSpec(ncols=15, nrows=30, width_ratios=[1.01]*3 + [1]*12, figure=fig)
-            gs.update(hspace=0.08, wspace=0.05, left=0.03, bottom=0.03, right=1-0.03, top=1-0.03)
+            fig = plt.figure(figsize=(14.4, 8.2), constrained_layout=False)
+            gs = mpl.gridspec.GridSpec(ncols=54, nrows=30, width_ratios=[1.01]*9 + [1]*36 + [1.01]*9, figure=fig)
+            gs.update(hspace=0.08, wspace=0.15, left=0.015, bottom=0.025, right=1-0.015, top=1-0.025)
 
             if logo is not None:
                 logo_img = Image.open(logo)
                 logo_img = logo_img.transpose(Image.FLIP_TOP_BOTTOM)
 
                 # Create an inset axes
-                axins = fig.add_axes([0.8, 0.88, 0.17, 0.11])
+                axins = fig.add_axes([0.843, 0.883, 0.142, 0.11])
                 axins.imshow(logo_img, alpha=1, aspect='auto')
                 # axins.tick_params(axis='both', which='both', bottom=False, top=False, left=False, right=False, labelbottom=False, labeltop=False, labelleft=False, labelright=False)
                 axins.axis('off')
 
 
-            fig.text(0.03, 0.977, f'ID ({catalog_shortname}): {ID}', va='top', ha='left',fontsize=12, weight='bold')
+            fig.text(0.015, 0.980, f'ID ({catalog_shortname}): {ID}', va='top', ha='left',fontsize=12, weight='bold')
             coordstring = coord.to_string('hmsdms', precision=2).split(' ')
-            fig.text(0.03, 0.952, f'Tile: {tile}', va='top', ha='left',fontsize=12)
-            fig.text(0.03, 0.927, f'RA, Dec: ({coordstring[0]}, {coordstring[1]})', va='top', ha='left',fontsize=12)
-            fig.text(0.094 , 0.902, f'({coord.ra.value:.7f}, {coord.dec.value:.6f})', va='top', ha='left',fontsize=12)
+            fig.text(0.015, 0.955, f'Tile: {tile}', va='top', ha='left',fontsize=12)
+            fig.text(0.015, 0.930, f'RA, Dec: ({coordstring[0]}, {coordstring[1]})', va='top', ha='left',fontsize=12)
+            fig.text(0.069 , 0.905, f'({coord.ra.value:.7f}, {coord.dec.value:.6f})', va='top', ha='left',fontsize=12)
 
 
-            ax_rgb = plt.subplot(gs[3:12,0:3])
-            ax_detc = plt.subplot(gs[12:21,0:3])
-            ax_segm = plt.subplot(gs[21:30,0:3])
+            ax_rgb = plt.subplot(gs[3:12,0:9])
+            ax_detc = plt.subplot(gs[12:21,0:9])
+            ax_segm = plt.subplot(gs[21:30,0:9])
+            ax_mod = plt.subplot(gs[3:12,-9:])
 
-            ax_f814 =  plt.subplot(gs[3:9,3:5])
-            ax_f115 =  plt.subplot(gs[3:9,5:7])
-            ax_f150 =  plt.subplot(gs[3:9,7:9])
-            ax_f277 =  plt.subplot(gs[3:9,9:11])
-            ax_f444 =  plt.subplot(gs[3:9,11:13])
-            ax_f770 =  plt.subplot(gs[3:9,13:15])
+            ax_f814 =  plt.subplot(gs[3:9,9:15])
+            ax_f115 =  plt.subplot(gs[3:9,15:21])
+            ax_f150 =  plt.subplot(gs[3:9,21:27])
+            ax_f277 =  plt.subplot(gs[3:9,27:33])
+            ax_f444 =  plt.subplot(gs[3:9,33:39])
+            ax_f770 =  plt.subplot(gs[3:9,39:45])
 
-            ax_g =     plt.subplot(gs[9:12,3])
-            ax_r =     plt.subplot(gs[9:12,4])
-            ax_i =     plt.subplot(gs[9:12,5])
-            ax_z =     plt.subplot(gs[9:12,6])
-            ax_y =     plt.subplot(gs[9:12,7])
-            ax_Y =     plt.subplot(gs[9:12,8])
-            ax_J =     plt.subplot(gs[9:12,9])
-            ax_H =     plt.subplot(gs[9:12,10])
-            ax_K =     plt.subplot(gs[9:12,11])
-            ax_irac1 = plt.subplot(gs[9:12,12])
-            ax_irac3 = plt.subplot(gs[9:12,13])
-            ax_irac4 = plt.subplot(gs[9:12,14])
+            ax_g =     plt.subplot(gs[9:12,9:12])
+            ax_r =     plt.subplot(gs[9:12,12:15])
+            ax_i =     plt.subplot(gs[9:12,15:18])
+            ax_z =     plt.subplot(gs[9:12,18:21])
+            ax_y =     plt.subplot(gs[9:12,21:24])
+            ax_Y =     plt.subplot(gs[9:12,24:27])
+            ax_J =     plt.subplot(gs[9:12,27:30])
+            ax_H =     plt.subplot(gs[9:12,30:33])
+            ax_K =     plt.subplot(gs[9:12,33:36])
+            ax_irac1 = plt.subplot(gs[9:12,36:39])
+            ax_irac3 = plt.subplot(gs[9:12,39:42])
+            ax_irac4 = plt.subplot(gs[9:12,42:45])
 
             ax_f814.text(0.05, 0.95, 'F814W', transform=ax_f814.transAxes, color='k', va='top', ha='left', path_effects=[pe.withStroke(linewidth=2, foreground='0.9')], weight='bold', size=12)
             ax_f115.text(0.05, 0.95, 'F115W', transform=ax_f115.transAxes, color='k', va='top', ha='left', path_effects=[pe.withStroke(linewidth=2, foreground='0.9')], weight='bold', size=12)
@@ -225,49 +242,66 @@ def main(IDs,
             ax_irac3.text(0.05, 0.95, 'IRAC3',  transform=ax_irac3.transAxes, color='white', va='top', ha='left', path_effects=[pe.withStroke(linewidth=1.3, foreground='k')], size=8)
             ax_irac4.text(0.05, 0.95, 'IRAC4',  transform=ax_irac4.transAxes, color='white', va='top', ha='left', path_effects=[pe.withStroke(linewidth=1.3, foreground='k')], size=8)
 
-            ax_detc.text(0.05, 0.95, r'$\chi^2_{+}$ detection',  transform=ax_detc.transAxes, color='white', va='top', ha='left', path_effects=[pe.withStroke(linewidth=2, foreground='k')], size=12)
-            ax_segm.text(0.05, 0.95, r'segmentation',  transform=ax_segm.transAxes, color='white', va='top', ha='left', path_effects=[pe.withStroke(linewidth=2, foreground='k')], size=12)
-            ax_rgb.text(0.05, 0.95, r'NIRCam RGB',  transform=ax_rgb.transAxes, color='white', va='top', ha='left', path_effects=[pe.withStroke(linewidth=2, foreground='k')], size=12)
+            ax_detc.text(0.04, 0.96, r'$\chi^2_{+}$ detection',  transform=ax_detc.transAxes, color='white', va='top', ha='left', path_effects=[pe.withStroke(linewidth=2, foreground='k')], size=12)
+            ax_segm.text(0.04, 0.96, r'segmentation',  transform=ax_segm.transAxes, color='white', va='top', ha='left', path_effects=[pe.withStroke(linewidth=2, foreground='k')], size=12)
+            ax_rgb.text(0.04, 0.96, r'NIRCam RGB',  transform=ax_rgb.transAxes, color='white', va='top', ha='left', path_effects=[pe.withStroke(linewidth=2, foreground='k')], size=12)
+            ax_mod.text(0.04, 0.96, 'Model (F277W)', transform=ax_mod.transAxes, color='k', va='top', ha='left', path_effects=[pe.withStroke(linewidth=2, foreground='0.9')], weight='bold', size=12)
+
+            if Reff < 0.1:
+                rstr = r"$R_{\rm eff} = " + fr"{Reff*1000:.1f} \pm {Reff_err*1000:.1f}$ mas" + '\n' + r'$n = ' + fr"{n_sersic:.2f} \pm {n_sersic_err:.2f}$"
+            elif Reff < 0.5:
+                rstr = r"$R_{\rm eff} = " + fr"{Reff:.3f} \pm {Reff_err:.3f}$ arcsec" + '\n' + r'$n = ' + fr"{n_sersic:.2f} \pm {n_sersic_err:.2f}$"
+            else:
+                rstr = r"$R_{\rm eff} = " + fr"{Reff:.2f} \pm {Reff_err:.2f}$ arcsec" + '\n' + r'$n = ' + fr"{n_sersic:.2f} \pm {n_sersic_err:.2f}$"
+            ax_mod.text(0.04, 0.04, rstr, transform=ax_mod.transAxes, color='k', va='bottom', ha='left', path_effects=[pe.withStroke(linewidth=1, foreground='0.9')], size=10)
 
             # ax_sed = plt.subplot(gs[3, 1:-1])
             # ax_pz = ax_sed.inset_axes([0.03,0.7,0.3,0.27])
-            img_axes = [ax_f814, ax_f115, ax_f150, ax_f277, ax_f444, ax_f770, ax_g, ax_r, ax_i, ax_z, ax_y, ax_Y, ax_J, ax_H, ax_K, ax_irac1, ax_irac3, ax_irac4, ax_rgb, ax_detc, ax_segm]
+            img_axes = [ax_f814, ax_f115, ax_f150, ax_f277, ax_f444, ax_f770, ax_g, ax_r, ax_i, ax_z, ax_y, ax_Y, ax_J, ax_H, ax_K, ax_irac1, ax_irac3, ax_irac4, ax_rgb, ax_detc, ax_segm, ax_mod]
             for ax in img_axes:
                 ax.set_aspect('equal')
                 ax.tick_params(labelleft=False,labelbottom=False,left=False,right=False,top=False,bottom=False,which='both')
 
-            ax_sed = plt.subplot(gs[13:-2,4:-1])
+            ax_sed = plt.subplot(gs[13:-2,11:-13])
             ax_sed.set_xlabel('Observed Wavelength [µm]')
-            ax_sed.set_ylabel('Flux Density [µJy]')
+            ax_sed.set_ylabel('AB mag')
 
             ax_sed.tick_params(right=False, which='both')
-            ax_sed.loglog()
-            ax_sed.set_xlim(0.2, 11)
-            ax_sed.set_ylim(2e-3, 1e2)
-            ax_sed.set_xticks([0.2,0.3,0.4,0.6,1.0,1.5,2.0,3.0,4.0,5,7,10],['0.2','0.3','0.4','0.6','1','1.5','2','3','4','5','7','10'])
+            ax_sed.semilogx()
+            ax_sed.set_xlim(0.3, 11)
+            ax_sed.set_ylim(-30.5, -21.5)
+            ax_sed.set_xticks([0.3,0.4,0.6,1.0,1.5,2.0,3.0,4.0,5,7,10],['0.3','0.4','0.6','1','1.5','2','3','4','5','7','10'])
 
-            def flux2mag(x):
-                return -2.5*np.log10(x/3631e6)
-            def mag2flux(x):
-                return 3631e6*np.power(10., -0.4*x)
+            # def flux2mag(x):
+            #     return -2.5*np.log10(x/3631e6)
+            # def mag2flux(x):
+            #     return 3631e6*np.power(10., -0.4*x)
 
-            secax1 = ax_sed.secondary_yaxis('right', functions=(flux2mag, mag2flux))
-            secax1.set_ylabel('AB mag')
-            secax1.yaxis.set_major_locator(mpl.ticker.MultipleLocator(2))
-            secax1.yaxis.set_minor_locator(mpl.ticker.MultipleLocator(0.5))
-            secax1.yaxis.set_major_formatter(mpl.ticker.ScalarFormatter())
-            secax1.yaxis.set_minor_formatter(mpl.ticker.NullFormatter())
+            # secax1 = ax_sed.secondary_yaxis('right', functions=(flux2mag, mag2flux))
+            # secax1.set_ylabel('AB mag')
+            # secax1.yaxis.set_major_locator(mpl.ticker.MultipleLocator(2))
+            # secax1.yaxis.set_minor_locator(mpl.ticker.MultipleLocator(0.5))
+            # secax1.yaxis.set_major_formatter(mpl.ticker.ScalarFormatter())
+            # secax1.yaxis.set_minor_formatter(mpl.ticker.NullFormatter())
 
-            ax_pz = ax_sed.inset_axes([0.03,0.7,0.38,0.27])
-            ax_pz.set_xlabel('Redshift', size=9, labelpad=1)
-            ax_pz.set_ylim(0, 1.05)
+            ax_pz = plt.subplot(gs[13:20,-12:])
+            # ax_pz = ax_sed.inset_axes([0.03,0.7,0.38,0.27])
+            ax_pz.set_xlabel('Redshift')#, size=9, labelpad=1)
+            ax_pz.set_ylim(0, 1.1)
             ax_pz.set_xlim(0, 20)
             ax_pz.tick_params(labelleft=False,left=False,right=False,top=False,which='both')
-            ax_pz.tick_params(direction='inout', which='both', labelsize=8, pad=1.5)
+            ax_pz.tick_params(direction='inout', which='both')#, labelsize=8, pad=1.5)
+            ax_pz.tick_params(axis='x', which='major', length=5)
+            ax_pz.tick_params(axis='x', which='minor', length=3)
             ax_pz.spines['left'].set_visible(False)
             ax_pz.spines['right'].set_visible(False)
             ax_pz.spines['top'].set_visible(False)
 
+            ax_leg1 = plt.subplot(gs[21:25,-13:])
+            ax_leg1.axis('off')
+            ax_leg2 = plt.subplot(gs[25:,-13:])
+            ax_leg2.axis('off')
+            legend_handles, legend_labels = [], []
 
 
             ######################################################################################################################################
@@ -301,21 +335,16 @@ def main(IDs,
                     extent = [-size*ps/2, size*ps/2, -size*ps/2, size*ps/2]
                     
                     cutouts.append((snr, wcs, extent))
-                    vm.append(np.nanpercentile(snr[size//2-50:size//2+50,size//2-50:size//2+50], 99.0))
+                    vm.append(np.nanpercentile(snr[size//2-50:size//2+50,size//2-50:size//2+50], 95.0))
                 except:
                     print(cutout_names[i], 'missing')
                     cutouts.append(None)
                     vm.append(0)
 
-            if vmax_in=='auto':
-                vmax = np.nanmax(vm)
-                if vmax < 8: vmax = 8
-                if vmax > 30: vmax = 30
-                vmin = -0.15*vmax
-            else:
-                assert (type(vmax_in)==int) or (type(vmax_in)==float)
-                vmax = vmax_in
-                vmin = -3
+            vmax = np.nanmax(vm)
+            if vmax < vmax_min: vmax = vmax_min
+            elif vmax > 50: vmax = 50
+            vmin = -0.15*vmax
             tr = transforms.Affine2D().rotate_deg_around(0, 0, 20)
             for i in range(N):
                 ############################## plot cutouts ##############################
@@ -362,7 +391,7 @@ def main(IDs,
                 size = np.shape(sci)[0]
                 extent = [-size*ps/2, size*ps/2, -size*ps/2, size*ps/2]
                 
-                ax.imshow(snr, vmin=-3, vmax=8, cmap='Greys', origin='lower', extent=extent)
+                ax.imshow(snr, vmin=vmin, vmax=vmax, cmap='Greys', origin='lower', extent=extent)
                 ax.set_xlim(-0.5*display_width.to(u.arcsec).value, 0.5*display_width.to(u.arcsec).value)
                 ax.set_ylim(-0.5*display_width.to(u.arcsec).value, 0.5*display_width.to(u.arcsec).value)
                 ax.spines[:].set_color(colors_dict[name])
@@ -416,10 +445,28 @@ def main(IDs,
             ax_rgb.set_xlim(-display_width.to(u.arcsec).value*3/4, display_width.to(u.arcsec).value*3/4)
             ax_rgb.set_ylim(-display_width.to(u.arcsec).value*3/4, display_width.to(u.arcsec).value*3/4)
 
+
+            if verbose: log('\t Making F277W model cutout...')
+            model_cutout = Cutout2D(model.data, coord, size=cutout_width*3/2, wcs=WCS(model.header))
+            wcs = model_cutout.wcs
+            ps = wcs.proj_plane_pixel_scales()[0].to(u.arcsec).value
+            size = np.shape(model_cutout.data)[0]
+            extent = [-size*ps/2, size*ps/2, -size*ps/2, size*ps/2]
+
+            d = model_cutout.data
+            cen = np.shape(d)[0]//2
+            vmax = np.nanpercentile(d[cen-10:cen+10,cen-10:cen+10],95)
+            ax_mod.imshow(d, extent=extent, vmin=-vmax/6, vmax=vmax, cmap='Greys', transform=tr + ax_mod.transData)
+            ax_mod.set_xlim(-display_width.to(u.arcsec).value*3/4, display_width.to(u.arcsec).value*3/4)
+            ax_mod.set_ylim(-display_width.to(u.arcsec).value*3/4, display_width.to(u.arcsec).value*3/4)
+
+
             def plot_data(ax, wav, wav_min, wav_max, flux, flux_err, colors, sizes, zorders, 
                           plot_xerr=True, 
                           annotate=True, 
                           label=None):
+                min_mag, max_mag = 0, -30
+
                 colors = np.array(colors)
                 wav = wav[flux_err>0]
                 wav_min = wav_min[flux_err>0]
@@ -427,26 +474,36 @@ def main(IDs,
                 colors = colors[flux_err>0]
                 flux = flux[flux_err>0]
                 flux_err = flux_err[flux_err>0]
-                for w, w1, w2, f, f_err, c, s, z in zip(wav, wav_min, wav_max, flux, flux_err, colors, sizes, zorders):
-                    snr = f/f_err
+                
+                snrs = flux/flux_err
+                flux_uplim = 2.5*np.log10((flux+2*flux_err)/3631e6)
+                flux = 2.5*np.log10(flux/3631e6)
+                flux_upper_err = 2.5*np.log10((flux+flux_err)/3631e6) - flux
+                flux_lower_err = flux - 2.5*np.log10((flux-flux_err)/3631e6)
+                for w, w1, w2, f, f_up_err, f_lo_err, f_up_lim, snr, c, s, z in zip(wav, wav_min, wav_max, flux, flux_upper_err, flux_lower_err, flux_uplim, snrs, colors, sizes, zorders):
+                    # print(f'{w:.2f} {f:.2f} {snr:.2f}')
                     if snr > 1.5:
-                        ax.errorbar(w, f, yerr=f_err, linewidth=0, marker='o', ms=s, 
+                        ax.errorbar(w, f, yerr=[[f_lo_err],[f_up_err]], linewidth=0, marker='o', ms=s, 
                                     mfc=c, mec=c, elinewidth=1, ecolor=c, mew=1, capthick=0, capsize=0, zorder=z)
                         if plot_xerr:
                             ax.errorbar(w, f, xerr=[[w-w1],[w2-w]], linewidth=0, marker='none',
                                         elinewidth=1, ecolor=c, mew=1, capthick=0, capsize=0, zorder=z)
                         if annotate: 
                             ax.annotate(fr'${snr:.1f}\sigma$', (w, 1.15*(f+f_err)), ha='center', va='bottom', color=c, fontsize=6, bbox=dict(facecolor='w', edgecolor='none', pad=0.01, alpha=0.7), zorder=z)
+                        if not np.isinf(f):
+                            min_mag = np.nanmin([min_mag, f])
+                            max_mag = np.nanmax([max_mag, f])
                     else:
-                        ax.errorbar(w, 2*f_err, yerr=0.5*f_err, uplims=True, linewidth=0,
-                                    mfc='none', mec=c, elinewidth=1, ecolor=c, mew=1, capthick=1, capsize=2.5, zorder=z)
+                        ax.errorbar(w, f_up_lim, yerr=0.3, uplims=True, linewidth=0,
+                                    mfc='none', mec=c, elinewidth=1, ecolor=c, mew=1, capthick=1, capsize=s/2, zorder=z)
                         if plot_xerr:
-                            ax.errorbar(w, 2*f_err, xerr=[[w-w1],[w2-w]], linewidth=0, marker='none', 
+                            ax.errorbar(w, f_up_lim, xerr=[[w-w1],[w2-w]], linewidth=0, marker='none', 
                                         elinewidth=1, ecolor=c, mew=1, capthick=0, capsize=0, zorder=z)
                         if annotate: ax.annotate(fr'${snr:.1f}\sigma$', (w, 1.15*2*f_err), ha='center', va='bottom', color=c, fontsize=6, bbox=dict(facecolor='w', edgecolor='none', pad=0.01, alpha=0.7), zorder=z)
-                if label is not None:
-                    return ax.errorbar(100, 1, yerr=1, xerr=1, linewidth=0, marker='o', ms=6, 
-                                mfc=c, mec=c, elinewidth=1, ecolor=c, mew=1.5, capthick=0, capsize=0, zorder=zorder, label=label)
+                        if not np.isinf(f_up_lim):
+                            min_mag = np.nanmin([min_mag, f_up_lim])
+                            max_mag = np.nanmax([max_mag, f_up_lim])
+                return min_mag, max_mag
 
 
             if verbose: log('\t Plotting photometry...')
@@ -454,62 +511,99 @@ def main(IDs,
             flux_cols = ['FLUX_MODEL_HST-F814W','FLUX_MODEL_F115W','FLUX_MODEL_F150W','FLUX_MODEL_F277W','FLUX_MODEL_F444W','FLUX_MODEL_F770W',
                         'FLUX_MODEL_CFHT-u','FLUX_MODEL_HSC-g','FLUX_MODEL_HSC-r','FLUX_MODEL_HSC-i','FLUX_MODEL_HSC-z','FLUX_MODEL_HSC-y',
                         'FLUX_MODEL_UVISTA-Y','FLUX_MODEL_UVISTA-J','FLUX_MODEL_UVISTA-H','FLUX_MODEL_UVISTA-Ks',
+                        'FLUX_MODEL_SC-IB427', 'FLUX_MODEL_SC-IA484', 'FLUX_MODEL_SC-IB505', 'FLUX_MODEL_SC-IA527', 
+                        'FLUX_MODEL_SC-IB574', 'FLUX_MODEL_SC-IA624', 'FLUX_MODEL_SC-IA679', 'FLUX_MODEL_SC-IB709', 
+                        'FLUX_MODEL_SC-IA738', 'FLUX_MODEL_SC-IA767', 'FLUX_MODEL_SC-IB827', 'FLUX_MODEL_SC-NB711', 
+                        'FLUX_MODEL_SC-NB816', 'FLUX_MODEL_HSC-NB0816', 'FLUX_MODEL_HSC-NB0921', 'FLUX_MODEL_HSC-NB1010', 
+                        'FLUX_MODEL_UVISTA-NB118', 
                         'FLUX_MODEL_IRAC-ch1','FLUX_MODEL_IRAC-ch3','FLUX_MODEL_IRAC-ch4']
+
+
             flux_err_cols = [f.replace('FLUX_','FLUX_ERR-CAL_') for f in flux_cols]
             flux = np.array([cat[f][0] for f in flux_cols])*1e29
             flux_err = np.array([cat[f][0] for f in flux_err_cols])*1e29
 
 
-            labels = ['F814W','F115W','F150W','F277W','F444W','F770W','$u$','$g$','$r$','$i$','$z$','$y$','$Y$','$J$','$H$',r'$K_s$', '[3.6]', '[5.8]', '[8.0]']
-            yoff = [1.05,1.05,1.05,1.05,1.05,1.05,1,1,1,1,1,1,1,1,1,1,1,1.05,0.9]
-            xoff = [1.01,1,1,1,1,1,1,1,1,0.95,1.03,1,1,1.03,1.03,1,1,1,1.2]
-            sizes = [6]*6 + [4]*13
+            labels = ['F814W','F115W','F150W','F277W','F444W','F770W','$u$','$g$','$r$','$i$','$z$','$y$','$Y$','$J$','$H$',r'$K_s$']
+            labels += ['']*17
+            labels += ['[3.6]', '[5.8]', '[8.0]']
+            yoff = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0,0,0,0,0,0,0,0,0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0.1,-0.1]
+            xoff = [1.01,1,1,1,1,1,1,1,1,0.95,1.03,1,1,1.03,1.03,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1,1.2]
+            sizes = [7]*6 + [4]*10 + [3]*20
             zorders = 1000-np.arange(len(colors))
 
-            maxflux = 0
             
-            maxflux = np.nanmax([maxflux,np.nanmax(flux)*2])
-            plot_data(ax_sed, wav, wav_min, wav_max, flux, flux_err, colors, sizes, zorders, annotate=False, plot_xerr=True)
+            # maxflux = 0
+            
+            # maxflux = np.nanmax([maxflux,np.nanmax(flux)*2])
+            min_mag, max_mag = plot_data(ax_sed, wav, wav_min, wav_max, flux, flux_err, colors, sizes, zorders, annotate=False, plot_xerr=True)
+            print(-min_mag, -max_mag)
+            
+            ymin, ymax = ax_sed.get_ylim()
+            if max_mag > -24: 
+                ymax = max_mag + 3
+            
+            if min_mag > -28:
+                ymin = min_mag - 2
+            ax_sed.set_ylim(ymin, ymax)
 
-            if maxflux > 1e2:
-                ax_sed.set_ylim(2e-3, 3*maxflux)
+                
+
+            # if maxflux > 1e2:
+            #     ax_sed.set_ylim(2e-3, 3*maxflux)
 
             ymin, ymax = ax_sed.get_ylim()
             for i in range(len(filters)):
                 w, t = filters[i].T
-                t = np.power(10., 0.3*t/np.max(t)+np.log10(ymin))
-                ax_sed.fill_between(w/1e4, ymin, t, edgecolor='none', facecolor=colors[i], alpha=0.08*sizes[i]/6)
-                ax_sed.plot(w/1e4, t, color=colors[i], linewidth=0.5, alpha=0.4*sizes[i]/6)
+                scale = 0.6*sizes[i]/7
+                t = scale*t/np.max(t) + ymin
+                ax_sed.fill_between(w/1e4, ymin, t, edgecolor='none', facecolor=colors[i], alpha=0.08*sizes[i]/4)
+                ax_sed.plot(w/1e4, t, color=colors[i], linewidth=0.5, alpha=0.4*sizes[i]/4)
                 ax_sed.annotate(labels[i], (wav[i]*xoff[i], np.max(t)*yoff[i]), ha='center', va='bottom', color=colors[i], size=6)
 
 
             if lephare_spec_path is not None:
-                lph_color = 'darkorange'
+                lph_color1 = 'darkorange'
+                lph_color2 = 'steelblue'
+                lph_color3 = 'darkmagenta'
+                lph_color4 = '0.7'
+
                 from .lephare_helpers import LephareResult
                 lph = LephareResult.read(os.path.join(lephare_spec_path, f'Id{ID}.0.spec'))
                 lph.pz.normalize()
-                ax_pz.plot(lph.pz.zgrid, lph.pz.Pz, color=lph_color, linewidth=0.8)
-                ax_pz.fill_between(lph.pz.zgrid, lph.pz.Pz, edgecolor='none', facecolor=lph_color, alpha=0.25)
+                ax_pz.plot(lph.pz.zgrid, lph.pz.Pz, color='k', linewidth=0.8)
+                ax_pz.fill_between(lph.pz.zgrid, lph.pz.Pz, edgecolor='none', facecolor='k', alpha=0.25)
                 # ax_pz.plot(lph.pz.zgrid, lph.pz.Pz_bayesian, color=lph_color, linewidth=0.5, linestyle='--')
 
                 cdf = np.cumsum(lph.pz.Pz)/np.sum(lph.pz.Pz)
-                zmin = np.interp(0.001, cdf, lph.pz.zgrid)
-                zmax = np.interp(0.999, cdf, lph.pz.zgrid)
-                if zmax < 4: 
-                    ax_pz.set_xlim(0, 4)
-                if zmax < 5: 
-                    ax_pz.set_xlim(0, 5)
-                elif zmax < 6: 
-                    ax_pz.set_xlim(0, 6)
-                elif zmax < 7: 
-                    ax_pz.set_xlim(0, 7)
-                elif zmax < 8: 
-                    ax_pz.set_xlim(0, 8)
-                elif zmax < 9: 
-                    ax_pz.set_xlim(0, 9)
-                elif zmax < 10: 
-                    ax_pz.set_xlim(0, 10)
+                zmin = np.interp(0.01, cdf, lph.pz.zgrid)
+                zmax = np.interp(0.99, cdf, lph.pz.zgrid)
+                z16 = np.interp(0.16, cdf, lph.pz.zgrid)
+                z50 = np.interp(0.50, cdf, lph.pz.zgrid)
+                z84 = np.interp(0.84, cdf, lph.pz.zgrid)
+                if zmin > 0.75:
+                    ax_pz.set_xlim(zmin-0.3, zmax+0.3)
+                else:
+                    ax_pz.set_xlim(0, zmax+0.5)
+                # if zmax < 3: 
+                #     ax_pz.set_xlim(0, 3)
+                # if zmax < 4: 
+                #     ax_pz.set_xlim(0, 4)
+                # if zmax < 5: 
+                #     ax_pz.set_xlim(0, 5)
+                # elif zmax < 6: 
+                #     ax_pz.set_xlim(0, 6)
+                # elif zmax < 7: 
+                #     ax_pz.set_xlim(0, 7)
+                # elif zmax < 8: 
+                #     ax_pz.set_xlim(0, 8)
+                # elif zmax < 9: 
+                #     ax_pz.set_xlim(0, 9)
+                # elif zmax < 10: 
+                #     ax_pz.set_xlim(0, 10)
 
+
+                ax_pz.errorbar(z50, 1.05, xerr=[[z50-z16],[z84-z50]], linewidth=0, marker='o', ms=6, ecolor='k', mfc='k', mec='k', elinewidth=1, mew=1, capthick=1, capsize=3, zorder=1000)
 
 
 
@@ -517,68 +611,67 @@ def main(IDs,
                 w = wav[:-3]
                 s = sizes[:-3]
                 for i in range(len(phot)):
-                    si = s[i] + 3
-                    ax_sed.errorbar(w[i], phot.model[i], marker='s', mew=1, mec=lph_color, mfc='none', ms=si, zorder=100)
+                    si = s[i] + 2
+                    e = ax_sed.errorbar(w[i], 2.5*np.log10(phot.model[i]/3631e6), marker='s', mew=1, mec=lph_color1, mfc='none', ms=si, zorder=100)
 
-                ax_sed.plot(lph.models['GAL-1']['wav_obs']/1e4, lph.models['GAL-1']['fnu'], color=lph_color, alpha=0.4, zorder=-999, linewidth=0.5)
+                p, = ax_sed.plot(lph.models['GAL-1']['wav_obs']/1e4, 2.5*np.log10(lph.models['GAL-1']['fnu']/3631e6), color=lph_color1, alpha=0.5, zorder=-999, linewidth=0.8)
+                chi2 = lph.models['GAL-1']['chi2']
+                zbest = lph.models['GAL-1']['zphot']
+                ax_pz.axvline(zbest, color=lph_color1, linestyle='--', linewidth=1)
+                legend_labels.append(fr'Galaxy best-fit ($z={zbest:.2f}$, $\chi^2 = {chi2:.1f}$)')
+                legend_handles.append((e, p, ))
+
+                if lph.models['GAL-2']['zphot'] > 0:
+                    p, = ax_sed.plot(lph.models['GAL-2']['wav_obs']/1e4, 2.5*np.log10(lph.models['GAL-2']['fnu']/3631e6), color=lph_color2, alpha=0.4, zorder=-999, linewidth=0.5)
+                    chi2 = lph.models['GAL-2']['chi2']
+                    zbest = lph.models['GAL-2']['zphot']
+                    ax_pz.axvline(zbest, color=lph_color2, linestyle='--', linewidth=1)
+                    legend_labels.append(fr'Secondary ($z={zbest:.2f}$, $\chi^2 = {chi2:.1f}$)')
+                    legend_handles.append(p)
+
+                if lph.models['QSO']['zphot'] > 0:
+                    ax_sed.plot(lph.models['QSO']['wav_obs']/1e4, 2.5*np.log10(lph.models['QSO']['fnu']/3631e6), color=lph_color3, alpha=0.4, zorder=-999, linewidth=0.5)
+                    p, = ax_sed.plot([1e-5,2e-5], [-50,-50], color=lph_color3, alpha=0.6, zorder=-999, linewidth=0.8)
+                    chi2 = lph.models['QSO']['chi2']
+                    zbest = lph.models['QSO']['zphot']
+                    ax_pz.axvline(zbest, color=lph_color3, linestyle='--', linewidth=1)
+                    legend_labels.append(fr'QSO ($z={zbest:.2f}$, $\chi^2 = {chi2:.1f}$)')
+                    legend_handles.append(p)
+
+                ax_sed.plot(lph.models['STAR']['wav_obs']/1e4, 2.5*np.log10(lph.models['STAR']['fnu']/3631e6), color=lph_color4, alpha=0.4, zorder=-999, linewidth=0.5)
+                p, = ax_sed.plot([1e-5,2e-5], [-50,-50], color=lph_color4, alpha=0.7, zorder=-999, linewidth=0.8)
+                chi2 = lph.models['STAR']['chi2']
+                legend_labels.append(fr'Star ($\chi^2 = {chi2:.1f}$)')
+                legend_handles.append(p)
+
+                if np.min([z50-z16, z84-z50]) < 0.1:
+                    s = r'LePhare $z_{\rm phot} = %.2f^{+%.2f}_{-%.2f}$' % (z50, z84-z50, z50-z16)
+                else:
+                    s = r'LePhare $z_{\rm phot} = %.1f^{+%.1f}_{-%.1f}$' % (z50, z84-z50, z50-z16)
+
+                s += '\n'
+                m16, m50, m84 = cat['LP_mass_l68_PDF'][0], cat['LP_mass_med_PDF'][0], cat['LP_mass_u68_PDF'][0]
+                s16, s50, s84 = cat['LP_ssfr_l68_PDF'][0], cat['LP_ssfr_med_PDF'][0], cat['LP_ssfr_u68_PDF'][0]
+                if np.min([m50-m16, m84-m50]) < 0.1:
+                    s += r'$\log M_\star/M_\odot = %.2f^{+%.2f}_{-%.2f}$' % (m50, m84-m50, m50-m16)
+                else:
+                    s += r'$\log M_\star/M_\odot = %.1f^{+%.1f}_{-%.1f}$' % (m50, m84-m50, m50-m16)
+                s += '\n'
+                if np.min([s50-s16, s84-s50]) < 0.1:
+                    s += r'$\log {\rm sSFR}/M_\odot\,{\rm yr}^{-1} = %.2f^{+%.2f}_{-%.2f}$' % (s50, s84-s50, s50-s16)
+                else:
+                    s += r'$\log {\rm sSFR}/M_\odot\,{\rm yr}^{-1} = %.1f^{+%.1f}_{-%.1f}$' % (s50, s84-s50, s50-s16)
+                ax_leg1.annotate(s, (0.03, 0.), ha='left', va='bottom', color='k', xycoords='axes fraction', fontsize=12)
+
+                # ax_leg1.annotate(s, (0.03, 0.2), ha='left', va='center', color='k', xycoords='axes fraction', fontsize=12)
 
 
-            # if brisket_run is not None:
-            #     import pickle
-            #     try:
-            #         with open(f'{brisket_run}/{nickname}_sed.pickle', 'rb') as f:
-            #             sed = pickle.load(f)
-            #     except:
-            #         with open(f'{brisket_run}/{ID}_sed.pickle', 'rb') as f:
-            #             sed = pickle.load(f)
-                
+            leg1 = ax_leg2.legend(handles=tuple(legend_handles), labels=tuple(legend_labels), frameon=True, loc='upper left')
 
-            #     from getdist import MCSamples
-            #     samples = np.array([sed['z']]).T
-            #     settings = {
-            #                 "contours":[0.68, 0.95, 0.99], 
-            #                 "range_ND_contour":1, 
-            #                 "range_confidence":0.001,
-            #                 "fine_bins":200,
-            #                 "fine_bins_2d":80,
-            #                 "smooth_scale_1D":0.1,
-            #                 "smooth_scale_2D":0.5,
-            #                 "tight_gap_fraction":0.15
-            #                 }
-            #     samples = MCSamples(samples=samples, names=['z'], settings=settings)
-            #     density = samples.get1DDensity('z')
-            #     x = np.linspace(0, 20, 1000)
-            #     y = density(x)
-            #     y[y<0] = 0
-            #     y = y/np.max(y)
-            #     ax_pz.fill_between(x, y, facecolor='royalblue', edgecolor='none', alpha=0.2)
-            #     ax_pz.plot(x, y, color='b')
-            #     z0 = x[np.argmax(y)]
-            #     if z0<1:
-            #         z0 = np.median(sed['z'])
-            #     ax_pz.axvline(z0, color='b', linestyle='--')
-            #     # t = Table({'z': x, 'Pz': y})
-            #     # t.write(f'{out_sed_dir}/{ID}_brisket_pz.txt', format='ascii', overwrite=True)
-            #     # zmin = np.percentile(np.random.choice(x, p=y/np.sum(y), size=1000), 16)
-            #     # zmax = np.percentile(np.random.choice(x, p=y/np.sum(y), size=1000), 84)
 
-            #     # y16, y50, y84 = samples.confidence('z', 0.16), samples.confidence('z', 0.50), samples.confidence('z', 0.84)
-            #     # ax.set_title(r'$z =' + f'{y50:.2f}' + '^{+' + f'{y84-y50:.2f}' + '}_{-' + f'{y50-y16:.2f}' + '}$', fontsize=8)
-            #     wav0 = np.logspace(-1, 1.5, 3000)
-            #     y = np.interp(wav0, sed['wav_rest'][0]*(1+z0), np.median(sed['f_nu'],axis=0))
-            #     ax_sed.plot(wav0, y, color='royalblue', linewidth=1)
-
-            #     sed_samples = np.zeros((len(sed['f_nu']), len(wav0)))
-            #     for i in range(len(sed_samples)):
-            #         z = sed['z'][i]
-            #         sed_samples[i] = np.interp(wav0, sed['wav_rest'][0]*(1+z), sed['f_nu'][i])
-
-            #     yl95, yl68, yu68, yu95 = np.percentile(sed_samples, [2.5,16,84,97.5], axis=0)
-            #     ax_sed.fill_between(wav0, yl68, yu68, facecolor='royalblue', edgecolor='none', alpha=0.15, zorder=-999)
-            #     ax_sed.fill_between(wav0, yl95, yu95, facecolor='royalblue', edgecolor='none', alpha=0.1, zorder=-1000)
-            #     # t = Table({'wav_obs': wav0,'fnu_l95': yl95, 'fnu_l68': yl68, 'fnu_med':y, 'fnu_u68':yu68, 'fnu_u95':yu95})
-            #     # t.write(f'{out_sed_dir}/{ID}_brisket_sed.txt', format='ascii', overwrite=True)
-
+            def labels(x, pos):
+                return f'{int(round(-x,0))}'
+            ax_sed.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(labels))
 
             if out_format == 'pdf':
                 plt.savefig(outpath)
@@ -595,7 +688,7 @@ def main(IDs,
 
 
 if __name__ == '__main__':
-    catalog_filename = 'COSMOSWeb_master_v3.1.0_assoc_cold+hot_sersic_cgs_err-calib.fits'
+    catalog_filename = 'COSMOSWeb_master_v3.1.0-sersic-cgs_err-calib_LePhare+CIGALE.fits'
     catalog_shortname = 'v3.1.0'
 
     if host.hostname == 'patrick':
@@ -657,7 +750,7 @@ if __name__ == '__main__':
          overwrite=True, 
          display_width=4*u.arcsec, 
          cutout_width=6*u.arcsec, 
-         vmax_in=10,
+         vmax_min=8,
          cmap='Greys', 
          lephare_spec_path = lephare_spec_path, 
         #  zphot_cat = zphot_cat, 

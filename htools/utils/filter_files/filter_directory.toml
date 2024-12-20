@@ -193,6 +193,11 @@ description = 'UltraVISTA Ks downloaded from SVO filter profile service'
 nicknames = ['UVISTA-Ks','uvista-Ks','UVISTA_Ks','uvista_Ks','ultravista-Ks','ultravista_Ks', 'UltraVISTA-Ks', 'UltraVISTA_Ks']
 wav_units = 'angstrom'
 
+['uvista/NB118']
+description = 'UltraVISTA NB118 downloaded from SVO filter profile service'
+nicknames = ['UVISTA-NB118','NB118']
+wav_units = 'angstrom'
+
 ['hst/hst_acs_f435w']
 description = 'HST ACS F435W downloaded from SVO filter profile service'
 nicknames = ['f435w','F435W','HST_F435W','hst_f435w','HST-F435W','hst-f435w', 'HST_ACS_F435W', 'hst_acs_f435w', 'HST-ACS-F435W', 'hst-acs-f435w']
@@ -266,4 +271,89 @@ wav_units = 'angstrom'
 ['spitzer/irac/ch4']
 description = 'Spitzer IRAC channel 4 downloaded from SVO filter profile service'
 nicknames = ['spitzer_irac_ch4', 'spitzer_IRAC_ch4', 'irac_ch4', 'IRAC_ch4', 'IRAC_CH4', 'SPITZER_IRAC_CH4', 'spitzer-irac-ch4']
+wav_units = 'angstrom'
+
+['subaru/hsc/NB816']
+description = 'Subaru HSC narrow band NB816 (area-weighted mean transmission) downloaded from the HSC website: https://subarutelescope.org//Observing/Instruments/HSC/sensitivity.html'
+nicknames = ['hsc_nb816', 'HSC_NB816', 'subaru_hsc_nb816', 'subaru-hsc-nb816', 'HSC-NB816', 'hsc-nb816', 'hsc_nb0816', 'HSC_NB0816', 'subaru_hsc_nb0816', 'subaru-hsc-nb0816', 'HSC-NB0816', 'hsc-nb0816']
+wav_units = 'angstrom'
+
+['subaru/hsc/NB921']
+description = 'Subaru HSC narrow band NB921 (area-weighted mean transmission) downloaded from the HSC website: https://subarutelescope.org//Observing/Instruments/HSC/sensitivity.html'
+nicknames = ['hsc_nb921', 'HSC_NB921', 'subaru_hsc_nb921', 'subaru-hsc-nb921', 'HSC-NB921', 'hsc-nb921', 'hsc_nb0921', 'HSC_NB0921', 'subaru_hsc_nb0921', 'subaru-hsc-nb0921', 'HSC-NB0921', 'hsc-nb0921']
+wav_units = 'angstrom'
+
+['subaru/hsc/NB1010']
+description = 'Subaru HSC narrow band NB1010 (area-weighted mean transmission) downloaded from the HSC website: https://subarutelescope.org//Observing/Instruments/HSC/sensitivity.html'
+nicknames = ['hsc_nb1010', 'HSC_NB1010', 'subaru_hsc_nb1010', 'subaru-hsc-nb1010', 'HSC-NB1010', 'hsc-nb1010', 'hsc_nb1010', 'HSC_NB1010', 'subaru_hsc_nb1010', 'subaru-hsc-nb1010', 'HSC-NB1010', 'hsc-nb1010']
+wav_units = 'angstrom'
+
+['subaru/sc/IB427']
+description = 'Subaru Suprime-Cam IB427 downloaded from SVO filter profile service'
+nicknames = ['IB427', 'subaru_IB427', 'IB427']
+wav_units = 'angstrom'
+
+['subaru/sc/IB464']
+description = 'Subaru Suprime-Cam IB464 downloaded from SVO filter profile service'
+nicknames = ['IB464', 'subaru_IB464', 'IB464']
+wav_units = 'angstrom'
+
+['subaru/sc/IB484']
+description = 'Subaru Suprime-Cam IB484 downloaded from SVO filter profile service'
+nicknames = ['IB484', 'subaru_IB484', 'IB484']
+wav_units = 'angstrom'
+
+['subaru/sc/IB505']
+description = 'Subaru Suprime-Cam IB505 downloaded from SVO filter profile service'
+nicknames = ['IB505', 'subaru_IB505', 'IB505']
+wav_units = 'angstrom'
+
+['subaru/sc/IB527']
+description = 'Subaru Suprime-Cam IB527 downloaded from SVO filter profile service'
+nicknames = ['IB527', 'subaru_IB527', 'IB527']
+wav_units = 'angstrom'
+
+['subaru/sc/IB574']
+description = 'Subaru Suprime-Cam IB574 downloaded from SVO filter profile service'
+nicknames = ['IB574', 'subaru_IB574', 'IB574']
+wav_units = 'angstrom'
+
+['subaru/sc/IB624']
+description = 'Subaru Suprime-Cam IB624 downloaded from SVO filter profile service'
+nicknames = ['IB624', 'subaru_IB624', 'IB624']
+wav_units = 'angstrom'
+
+['subaru/sc/IB679']
+description = 'Subaru Suprime-Cam IB679 downloaded from SVO filter profile service'
+nicknames = ['IB679', 'subaru_IB679', 'IB679']
+wav_units = 'angstrom'
+
+['subaru/sc/IB709']
+description = 'Subaru Suprime-Cam IB709 downloaded from SVO filter profile service'
+nicknames = ['IB709', 'subaru_IB709', 'IB709']
+wav_units = 'angstrom'
+
+['subaru/sc/NB711']
+description = 'Subaru Suprime-Cam NB711 downloaded from SVO filter profile service'
+nicknames = ['NB711', 'subaru_nb711', 'subaru-NB711', 'NB0711', 'subaru_nb0711', 'subaru-NB0711']
+wav_units = 'angstrom'
+
+['subaru/sc/IB738']
+description = 'Subaru Suprime-Cam IB738 downloaded from SVO filter profile service'
+nicknames = ['IB738', 'subaru_IB738', 'IB738']
+wav_units = 'angstrom'
+
+['subaru/sc/IB767']
+description = 'Subaru Suprime-Cam IB767 downloaded from SVO filter profile service'
+nicknames = ['IB767', 'subaru_IB767', 'IB767']
+wav_units = 'angstrom'
+
+['subaru/sc/NB816']
+description = 'Subaru Suprime-Cam NB816 downloaded from SVO filter profile service'
+nicknames = ['NB816', 'subaru_nb816', 'subaru-NB816', 'NB0816', 'subaru_nb0816', 'subaru-NB0816']
+wav_units = 'angstrom'
+
+['subaru/sc/IB827']
+description = 'Subaru Suprime-Cam IB827 downloaded from SVO filter profile service'
+nicknames = ['IB827', 'subaru_IB827', 'IB827']
 wav_units = 'angstrom'
