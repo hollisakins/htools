@@ -758,7 +758,7 @@ if __name__ == '__main__':
          catalog_shortname=catalog_shortname, 
          outdir=outdir, 
          out_format='png', dpi=400, 
-         overwrite=True, 
+         overwrite=False, 
          display_width=4*u.arcsec, 
          vmax_min=8,
          cmap='Greys', 
