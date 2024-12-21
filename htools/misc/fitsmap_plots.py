@@ -144,6 +144,18 @@ def main(IDs,
         for i in tqdm.tqdm(range(len(IDs[tile]))):
             ID = IDs[tile][i]
 
+            outfilename = f"cosmos-web_sed_{catalog_shortname.replace('-','_')}_{ID}"
+            outpath = os.path.join(outdir, outfilename)
+            if out_format == 'png':
+                outpath += '.png'
+            elif out_format == 'pdf':
+                outpath += '.pdf'
+
+            if not overwrite: 
+                if os.path.exists(outpath):
+                    if verbose: print(f'\t Skipping, plot already exists at {outpath}.')
+                    continue
+
             ######################################################################################################################################
             cat = catalog[catalog['ID_SE++']==ID]
             ra = cat['RA_MODEL'][0]
@@ -167,16 +179,6 @@ def main(IDs,
                 i += 1
             cutout_width = display_width*1.5
 
-            outfilename = f"cosmos-web_sed_{catalog_shortname.replace('-','_')}_{ID}"
-            outpath = os.path.join(outdir, outfilename)
-            if out_format == 'png':
-                outpath += '.png'
-            elif out_format == 'pdf':
-                outpath += '.pdf'
-
-            if not overwrite: 
-                if os.path.exists(outpath):
-                    if verbose: print(f'\t Skipping, plot already exists at {outpath}.')
 
 
             ######################################################################################################################################

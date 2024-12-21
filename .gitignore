@@ -4,3 +4,4 @@ htools/jwst/__pycache__
 htools/misc/__pycache__
 htools/utils/__pycache__
 htools/plotting/__pycache__
+.DS_Store
