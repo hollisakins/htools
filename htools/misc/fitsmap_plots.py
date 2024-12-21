@@ -141,8 +141,9 @@ def main(IDs,
         detec = io.load_cosmos_web_detec(tile)
         segm = io.load_cosmos_web_segm(tile, catalog_version='v1.3')
 
-        for i in tqdm.tqdm(range(len(IDs[tile]))):
+        for i in (pbar := tqdm.tqdm(range(len(IDs[tile])))):
             ID = IDs[tile][i]
+            pbar.set_description(ID)
 
             outfilename = f"cosmos-web_sed_{catalog_shortname.replace('-','_')}_{ID}"
             outpath = os.path.join(outdir, outfilename)
