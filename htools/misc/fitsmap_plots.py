@@ -143,7 +143,7 @@ def main(IDs,
 
         for i in (pbar := tqdm.tqdm(range(len(IDs[tile])))):
             ID = IDs[tile][i]
-            pbar.set_description(ID)
+            pbar.set_description(str(ID))
 
             outfilename = f"cosmos-web_sed_{catalog_shortname.replace('-','_')}_{ID}"
             outpath = os.path.join(outdir, outfilename)
