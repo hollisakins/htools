@@ -107,7 +107,6 @@ def main(IDs,
          dpi=None,
          overwrite=True,
          display_width = 4*u.arcsec,
-         cutout_width = 6*u.arcsec,
          vmax_min = 10,
          cmap = 'Greys',
          lephare_spec_path=None,
@@ -150,16 +149,23 @@ def main(IDs,
             ra = cat['RA_MODEL'][0]
             dec = cat['DEC_MODEL'][0]
             coord = SkyCoord(ra=ra, dec=dec, unit=u.deg)
-            rad = np.sqrt(cat['AREA'][0]) * 0.03
-            if rad*2 > display_width.to(u.arcsec).value:
-                sf = (rad*2.5) / display_width.to(u.arcsec).value
-                display_width *= sf
-                cutout_width *= sf
             
             Reff = cat['RADIUS'][0] * 3600
             Reff_err = cat['RADIUS_err'][0] * 3600
             n_sersic = cat['SERSIC'][0]
             n_sersic_err = cat['SERSIC_err'][0]
+
+            display_width_options = [4, 5, 6, 8, 10, 15]
+            scalebar_size_options = [2, 3, 3, 4, 4, 5]
+            i = np.argmin(np.abs(np.array(display_width_options)-display_width.to(u.arcsec).value))
+            display_width = display_width_options[i]*u.arcsec
+            scalebar_size = scalebar_size_options[i]*u.arcsec
+            i = 0
+            while Reff*10 > display_width.to(u.arcsec).value:
+                display_width = display_width_options[i]*u.arcsec
+                scalebar_size = scalebar_size_options[i]*u.arcsec
+                i += 1
+            cutout_width = display_width*1.5
 
             outfilename = f"cosmos-web_sed_{catalog_shortname.replace('-','_')}_{ID}"
             outpath = os.path.join(outdir, outfilename)
@@ -444,7 +450,13 @@ def main(IDs,
             ax_rgb.imshow(imrgb, extent=extent)
             ax_rgb.set_xlim(-display_width.to(u.arcsec).value*3/4, display_width.to(u.arcsec).value*3/4)
             ax_rgb.set_ylim(-display_width.to(u.arcsec).value*3/4, display_width.to(u.arcsec).value*3/4)
-
+            x0, y0 = -display_width.to(u.arcsec).value*3/4, -display_width.to(u.arcsec).value*3/4
+            x0 += 0.05*display_width.to(u.arcsec).value
+            y0 += 0.07*display_width.to(u.arcsec).value
+            x0 += scalebar_size.to(u.arcsec).value/2
+            ax_rgb.errorbar(x0, y0, xerr=scalebar_size.to(u.arcsec).value/2, yerr=0, linewidth=1, color='w', capsize=3, capthick=1, marker='none')
+            y0 += 0.025*display_width.to(u.arcsec).value
+            ax_rgb.annotate(f'{scalebar_size.to(u.arcsec).value:.0f}"', (x0, y0), ha='center', va='bottom', color='w', fontsize=8, path_effects=[pe.withStroke(linewidth=0.5, foreground='k')])
 
             if verbose: log('\t Making F277W model cutout...')
             model_cutout = Cutout2D(model.data, coord, size=cutout_width*3/2, wcs=WCS(model.header))
@@ -537,7 +549,6 @@ def main(IDs,
             
             # maxflux = np.nanmax([maxflux,np.nanmax(flux)*2])
             min_mag, max_mag = plot_data(ax_sed, wav, wav_min, wav_max, flux, flux_err, colors, sizes, zorders, annotate=False, plot_xerr=True)
-            print(-min_mag, -max_mag)
             
             ymin, ymax = ax_sed.get_ylim()
             if max_mag > -24: 
@@ -749,12 +760,7 @@ if __name__ == '__main__':
          out_format='png', dpi=400, 
          overwrite=True, 
          display_width=4*u.arcsec, 
-         cutout_width=6*u.arcsec, 
          vmax_min=8,
          cmap='Greys', 
          lephare_spec_path = lephare_spec_path, 
-        #  zphot_cat = zphot_cat, 
-        #  zpdf_cat = zpdf_cat,
-        #  eazy_run=None, 
-        #  eazy_outdir=None, 
          verbose=False)
