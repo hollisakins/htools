@@ -1,6 +1,6 @@
 htools/__pycache__/*
 htools.egg-info
-htools/jwst/__pycache__/
-htools/misc/__pycache__/
-htools/utils/__pycache__/
-htools/plotting/__pycache__/
+htools/jwst/__pycache__
+htools/misc/__pycache__
+htools/utils/__pycache__
+htools/plotting/__pycache__
