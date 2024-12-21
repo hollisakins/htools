@@ -175,9 +175,14 @@ def main(IDs,
             scalebar_size = scalebar_size_options[i]*u.arcsec
             i = 0
             while Reff*10 > display_width.to(u.arcsec).value:
-                display_width = display_width_options[i]*u.arcsec
-                scalebar_size = scalebar_size_options[i]*u.arcsec
-                i += 1
+                try:
+                    display_width = display_width_options[i]*u.arcsec
+                    scalebar_size = scalebar_size_options[i]*u.arcsec
+                    i += 1
+                except:
+                    display_width = display_width_options[-1]*u.arcsec
+                    scalebar_size = scalebar_size_options[-1]*u.arcsec
+                    break
             cutout_width = display_width*1.5
 
 
