@@ -471,6 +471,8 @@ def main(IDs,
             d = model_cutout.data
             cen = np.shape(d)[0]//2
             vmax = np.nanpercentile(d[cen-10:cen+10,cen-10:cen+10],95)
+            if vmax < 0: vmax = np.nanpercentile(d[cen-20:cen+20,cen-20:cen+20],99)
+            if vmax < 0: vmax = np.nanmax(d)
             ax_mod.imshow(d, extent=extent, vmin=-vmax/6, vmax=vmax, cmap='Greys', transform=tr + ax_mod.transData)
             ax_mod.set_xlim(-display_width.to(u.arcsec).value*3/4, display_width.to(u.arcsec).value*3/4)
             ax_mod.set_ylim(-display_width.to(u.arcsec).value*3/4, display_width.to(u.arcsec).value*3/4)
@@ -559,6 +561,7 @@ def main(IDs,
             
             if min_mag > -28:
                 ymin = min_mag - 2
+
             ax_sed.set_ylim(ymin, ymax)
 
                 
