@@ -604,7 +604,7 @@ def main(IDs,
                 z16 = np.interp(0.16, cdf, lph.pz.zgrid)
                 z50 = np.interp(0.50, cdf, lph.pz.zgrid)
                 z84 = np.interp(0.84, cdf, lph.pz.zgrid)
-                if any(np.isnan(zmin,zmax,z16,z50,z84)) or any(np.isinf(zmin,zmax,z16,z50,z84)):
+                if any(np.isnan([zmin,zmax,z16,z50,z84])) or any(np.isinf([zmin,zmax,z16,z50,z84])):
                     ax_pz.set_xlim(0, 20)
                 elif zmin > 0.75:
                     ax_pz.set_xlim(zmin-0.3, zmax+0.3)
