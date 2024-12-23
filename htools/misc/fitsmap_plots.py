@@ -505,11 +505,14 @@ def main(IDs,
                 for w, w1, w2, f, f_up_err, f_lo_err, f_up_lim, snr, c, s, z in zip(wav, wav_min, wav_max, flux, flux_upper_err, flux_lower_err, flux_uplim, snrs, colors, sizes, zorders):
                     # print(f'{w:.2f} {f:.2f} {snr:.2f}')
                     if snr > 1.5:
-                        ax.errorbar(w, f, yerr=[[f_lo_err],[f_up_err]], linewidth=0, marker='o', ms=s, 
-                                    mfc=c, mec=c, elinewidth=1, ecolor=c, mew=1, capthick=0, capsize=0, zorder=z)
-                        if plot_xerr:
-                            ax.errorbar(w, f, xerr=[[w-w1],[w2-w]], linewidth=0, marker='none',
-                                        elinewidth=1, ecolor=c, mew=1, capthick=0, capsize=0, zorder=z)
+                        try:
+                            ax.errorbar(w, f, yerr=[[f_lo_err],[f_up_err]], linewidth=0, marker='o', ms=s, 
+                                        mfc=c, mec=c, elinewidth=1, ecolor=c, mew=1, capthick=0, capsize=0, zorder=z)
+                            if plot_xerr:
+                                ax.errorbar(w, f, xerr=[[w-w1],[w2-w]], linewidth=0, marker='none',
+                                            elinewidth=1, ecolor=c, mew=1, capthick=0, capsize=0, zorder=z)
+                        except ValueError:
+                            continue
                         if annotate: 
                             ax.annotate(fr'${snr:.1f}\sigma$', (w, 1.15*(f+f_err)), ha='center', va='bottom', color=c, fontsize=6, bbox=dict(facecolor='w', edgecolor='none', pad=0.01, alpha=0.7), zorder=z)
                         if not np.isinf(f):
