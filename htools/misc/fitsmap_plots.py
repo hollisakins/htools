@@ -354,7 +354,6 @@ def main(IDs,
                     print(cutout_names[i], 'missing')
                     cutouts.append(None)
                     vm.append(0)
-                    raise
 
             vmax = np.nanmax(vm)
             if vmax < vmax_min: vmax = vmax_min
