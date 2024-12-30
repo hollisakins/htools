@@ -351,7 +351,7 @@ def main(IDs,
                     cutouts.append((snr, wcs, extent))
                     vm.append(np.nanpercentile(snr[size//2-50:size//2+50,size//2-50:size//2+50], 95.0))
                 except:
-                    print(cutout_names[i], 'missing')
+                    #print(cutout_names[i], 'missing')
                     cutouts.append(None)
                     vm.append(0)
 
