@@ -168,13 +168,13 @@ def main(IDs,
             n_sersic = cat['SERSIC'][0]
             n_sersic_err = cat['SERSIC_err'][0]
 
-            display_width_options = [4, 5, 6, 8, 10, 15]
-            scalebar_size_options = [2, 3, 3, 4, 4, 5]
+            display_width_options = [4, 5, 6, 8, 10]
+            scalebar_size_options = [2, 3, 3, 4, 4]
             i = np.argmin(np.abs(np.array(display_width_options)-display_width.to(u.arcsec).value))
             display_width = display_width_options[i]*u.arcsec
             scalebar_size = scalebar_size_options[i]*u.arcsec
             i = 0
-            while Reff*10 > display_width.to(u.arcsec).value:
+            while Reff*2 > display_width.to(u.arcsec).value:
                 try:
                     display_width = display_width_options[i]*u.arcsec
                     scalebar_size = scalebar_size_options[i]*u.arcsec
