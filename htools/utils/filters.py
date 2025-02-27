@@ -3,6 +3,11 @@ from astropy.units import Unit
 import toml, os
 from ..config import filter_directory
 
+if hasattr(np, 'trapezoid'):
+    trapz = np.trapezoid
+else:
+    trapz = np.trapz
+
 class Filters(object):
     """Class for loading and manipulating sets of filter curves. 
 
@@ -60,7 +65,7 @@ class Filters(object):
             filt = self.names[i]
 
             w, T = self.filt_dict[filt][:, 0], self.filt_dict[filt][:, 1]
-            self.wav[i] = np.trapezoid(w*T, x=w)/np.trapezoid(T, x=w)
+            self.wav[i] = trapz(w*T, x=w)/trapz(T, x=w)
             self.wav_min[i] = np.min(w[T/np.max(T) > 0.01])
             self.wav_max[i] = np.max(w[T/np.max(T) > 0.01])
 
