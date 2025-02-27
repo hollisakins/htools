@@ -65,7 +65,7 @@ def get_cosmos_web_filepath(band, ext, tile, ps='30mas'):
     if band not in config.bands['cosmos-web']:
         raise ValueError(f"{band} not available for COSMOS-Web")
     
-    if ext not in ['sci','wht','err','mod']:
+    if not (ext in ['sci','wht','err','mod'] or ext.startswith('sci')):
         raise ValueError(f"{ext} not understood")
     
     if ps not in ['30mas','60mas']:

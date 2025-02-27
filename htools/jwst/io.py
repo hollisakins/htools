@@ -24,7 +24,7 @@ def load_image(field, band, ext, tile=None, convert_units=False, ps='30mas'):
     '''
 
     assert field in config.all_fields, f"Field {field} not recognized. Options are: {config.all_fields}"
-    assert band in config.all_hst_bands or band in config.all_jwst_bands or band in config.misc_bands, f"Band {band} not recognized. Options are: {config.all_hst_bands + config.all_jwst_bands}"
+    assert band in config.all_hst_bands or band in config.all_jwst_bands or band in config.misc_bands, f"Band {band} not recognized. Options are: {config.all_hst_bands + config.all_jwst_bands + config.misc_bands}"
 
     if field == 'cosmos-web':
         assert tile is not None, "For COSMOS-Web, you must specify a tile"
@@ -41,23 +41,25 @@ def load_image(field, band, ext, tile=None, convert_units=False, ps='30mas'):
     del f
 
     if convert_units:
-        if 'sci' in ext or 'err' in ext:
-            if band in config.all_hst_bands: 
-                photflam, photplam = header['PHOTFLAM'], header['PHOTPLAM']
-                conversion = 3.33564e10 * (photplam)**2 * photflam
+        # import numpy as np
+        # if 'sci' in ext or 'err' in ext:
+        #     if band in config.all_hst_bands: 
+        #         photflam, photplam = header['PHOTFLAM'], header['PHOTPLAM']
+        #         conversion = 3.33564e10 * (photplam)**2 * photflam
             
-            elif band in config.all_jwst_bands: # JWST
-                if header['BUNIT'] == 'MJy/sr':
-                    wcs = WCS(header)
-                    pa = wcs.proj_plane_pixel_area().to('sr').value
-                    conversion = 1e12 * pa
-                conversion = 1e12 * np.pi**2/(180**2) * (1/(3600**2)) * 0.03**2
+        #     elif band in config.all_jwst_bands: # JWST
+        #         if header['BUNIT'] == 'MJy/sr':
+        #             wcs = WCS(header)
+        #             pa = wcs.proj_plane_pixel_area().to('sr').value
+        #             conversion = 1e12 * pa
+        #         conversion = 1e12 * np.pi**2/(180**2) * (1/(3600**2)) * 0.03**2
 
-            else:
-                raise Exception(f"Not sure how to convert units for {band}.")
-            data *= conversion
-        else:
-            raise Exception(f"Not converting units for extension {ext}")
+        #     else:
+        #         raise Exception(f"Not sure how to convert units for {band}.")
+        #     data *= conversion
+        # else:
+        #     raise Exception(f"Not converting units for extension {ext}")
+        raise Exception(f"Not yet configured to convert units.")
 
     return data, header
 
